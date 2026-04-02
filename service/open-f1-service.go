@@ -8,70 +8,70 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/nstandage/f1-go-cli-app/models"
+	"github.com/nstandage/f1-go-cli-app/model"
 )
 
 type OpenF1Service struct{}
 
 var baseUrl string = "https://api.openf1.org/v1"
 
-func (s *OpenF1Service) FetchSessions(ctx context.Context, sessionKey string) (*[]models.Session, error) {
+func (s *OpenF1Service) FetchSessions(ctx context.Context, sessionKey string) (*[]model.Session, error) {
 	url := fmt.Sprintf("%v/sessions?session_key=%v", baseUrl, sessionKey)
-	session, err := fetchData[[]models.Session](ctx, url)
+	session, err := fetchData[[]model.Session](ctx, url)
 	return session, err
 }
 
-func (s *OpenF1Service) FetchMeetings(ctx context.Context, sessionKey string) (*[]models.Meeting, error) {
+func (s *OpenF1Service) FetchMeetings(ctx context.Context, sessionKey string) (*[]model.Meeting, error) {
 	url := fmt.Sprintf("%v/meetings?session_key=%v", baseUrl, sessionKey)
-	meeting, err := fetchData[[]models.Meeting](ctx, url)
+	meeting, err := fetchData[[]model.Meeting](ctx, url)
 	return meeting, err
 }
 
-func (s *OpenF1Service) FetchDrivers(ctx context.Context, sessionKey string) (*[]models.Driver, error) {
+func (s *OpenF1Service) FetchDrivers(ctx context.Context, sessionKey string) (*[]model.Driver, error) {
 	url := fmt.Sprintf("%v/drivers?session_key=%v", baseUrl, sessionKey)
-	drivers, err := fetchData[[]models.Driver](ctx, url)
+	drivers, err := fetchData[[]model.Driver](ctx, url)
 	return drivers, err
 }
 
-func (s *OpenF1Service) FetchIntervals(ctx context.Context, sessionKey string) (*[]models.Interval, error) {
-	url := fmt.Sprintf("%v/intervals?session_key=%v", baseUrl, sessionKey)
-	interval, err := fetchData[[]models.Interval](ctx, url)
+func (s *OpenF1Service) FetchIntervals(ctx context.Context, sessionKey string) (*[]model.Interval, error) {
+	url := fmt.Sprintf("%v/intervals?session_key=%v&interval<0.005", baseUrl, sessionKey)
+	interval, err := fetchData[[]model.Interval](ctx, url)
 	return interval, err
 }
 
-func (s *OpenF1Service) FetchLaps(ctx context.Context, sessionKey string) (*[]models.Lap, error) {
+func (s *OpenF1Service) FetchLaps(ctx context.Context, sessionKey string) (*[]model.Lap, error) {
 	url := fmt.Sprintf("%v/laps?session_key=%v", baseUrl, sessionKey)
-	laps, err := fetchData[[]models.Lap](ctx, url)
+	laps, err := fetchData[[]model.Lap](ctx, url)
 	return laps, err
 }
 
-func (s *OpenF1Service) FetchLocations(ctx context.Context, sessionKey string, driverNumber uint) (*[]models.Location, error) {
+func (s *OpenF1Service) FetchLocations(ctx context.Context, sessionKey string, driverNumber uint) (*[]model.Location, error) {
 	url := fmt.Sprintf("%v/location?session_key=%v&driver_number=%v", baseUrl, sessionKey, driverNumber)
-	locations, err := fetchData[[]models.Location](ctx, url)
+	locations, err := fetchData[[]model.Location](ctx, url)
 	return locations, err
 }
 
-func (s *OpenF1Service) FetchPits(ctx context.Context, sessionKey string) (*[]models.Pit, error) {
+func (s *OpenF1Service) FetchPits(ctx context.Context, sessionKey string) (*[]model.Pit, error) {
 	url := fmt.Sprintf("%v/pit?session_key=%v", baseUrl, sessionKey)
-	pits, err := fetchData[[]models.Pit](ctx, url)
+	pits, err := fetchData[[]model.Pit](ctx, url)
 	return pits, err
 }
 
-func (s *OpenF1Service) FetchPositions(ctx context.Context, sessionKey string) (*[]models.Position, error) {
+func (s *OpenF1Service) FetchPositions(ctx context.Context, sessionKey string) (*[]model.Position, error) {
 	url := fmt.Sprintf("%v/pit?session_key=%v", baseUrl, sessionKey)
-	positions, err := fetchData[[]models.Position](ctx, url)
+	positions, err := fetchData[[]model.Position](ctx, url)
 	return positions, err
 }
 
-func (s *OpenF1Service) FetchRaceControls(ctx context.Context, sessionKey string) (*[]models.RaceControl, error) {
+func (s *OpenF1Service) FetchRaceControls(ctx context.Context, sessionKey string) (*[]model.RaceControl, error) {
 	url := fmt.Sprintf("%v/race_control?session_key=%v", baseUrl, sessionKey)
-	raceControl, err := fetchData[[]models.RaceControl](ctx, url)
+	raceControl, err := fetchData[[]model.RaceControl](ctx, url)
 	return raceControl, err
 }
 
-func (s *OpenF1Service) FetchStint(ctx context.Context, sessionKey string) (*[]models.Stint, error) {
+func (s *OpenF1Service) FetchStint(ctx context.Context, sessionKey string) (*[]model.Stint, error) {
 	url := fmt.Sprintf("%v/stints?session_key=%v", baseUrl, sessionKey)
-	stints, err := fetchData[[]models.Stint](ctx, url)
+	stints, err := fetchData[[]model.Stint](ctx, url)
 	return stints, err
 }
 
