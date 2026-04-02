@@ -4,20 +4,34 @@ import (
 	"context"
 	"fmt"
 
+	datasource "github.com/nstandage/f1-go-cli-app/data-sources"
 	"github.com/nstandage/f1-go-cli-app/service"
 )
 
 func main() {
-	hs := service.HistoricalSource{}
-	channel := make(chan string)
 
-	go hs.Start(context.Background(), channel)
-	fmt.Println("1")
-	for msg := range channel {
-		fmt.Println("2")
-		fmt.Println(msg)
+	var sessionKey uint = 11253
+	service := service.OpenF1Service{}
+
+	hs := datasource.HistoricalSource{
+		Service: &service,
 	}
 
-	fmt.Println("3")
+	_, err := hs.Start(sessionKey, context.Background())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println("\nDone")
+
+	// go hs.Start(context.Background(), channel)
+	// fmt.Println("1")
+	// for msg := range channel {
+	// 	fmt.Println("2")
+	// 	fmt.Println(msg)
+	// }
+
+	// fmt.Println("3")
 	// close(channel)
 }

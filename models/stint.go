@@ -1,6 +1,6 @@
 package models
 
-type Stirng struct {
+type Stint struct {
 	Compound       string `json:"compound"`
 	DriverNumber   uint   `json:"driver_number"`
 	LapEnd         uint   `json:"lap_end"`
