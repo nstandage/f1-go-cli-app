@@ -9,15 +9,15 @@ import (
 )
 
 type DataSource interface {
-	Start(meetingId uint, ctx context.Context, out chan<- string)
+	Start(meetingId string, ctx context.Context, out chan<- string)
 }
 
 type HistoricalSource struct {
 	Service *service.OpenF1Service
 }
 
-func (hs *HistoricalSource) Start(sessionKey uint, ctx context.Context) (*models.SessionData, error) {
-	session, err := hs.Service.FetchSession(ctx, sessionKey)
+func (hs *HistoricalSource) Start(sessionKey string, ctx context.Context) (*models.SessionData, error) {
+	session, err := hs.Service.FetchSessions(ctx, sessionKey)
 	if err != nil {
 		return nil, err
 	}
