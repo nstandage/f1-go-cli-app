@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
 
 	"github.com/nstandage/f1-go-cli-app/aggregator"
 	"github.com/nstandage/f1-go-cli-app/datasource"
@@ -13,30 +13,21 @@ import (
 func main() {
 
 	var sessionKey = "11253"
-	service := service.OpenF1Service{}
+	service := service.OpenF1HTTP{}
 
 	hs := datasource.HistoricalSource{
 		Service: &service,
 	}
 
-	sessionData, err := hs.Start(context.Background(), sessionKey)
+	sessionData, err := hs.Fetch(context.Background(), sessionKey)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
+
+	replay := datasource.ReplayEngine{SessionData: sessionData}
+	ag := aggregator.Engine{}
 
 	c := make(chan *model.Event)
-	eng := datasource.ReplayEngine{
-		SessionData: sessionData,
-		Channel:     c,
-	}
-
-	ag := aggregator.Engine{
-		Channel: c,
-	}
-
-	go hs.Load(&eng)
-	for event := range c {
-		ag.Handle(event)
-	}
+	go ag.Start(c)
+	replay.Start(c)
 }

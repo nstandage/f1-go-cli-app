@@ -6,15 +6,15 @@ import (
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
-type Engine struct {
-	Channel chan *model.Event
-}
+type Engine struct{}
 
-func (eng *Engine) Start() { // Drivers, laps, pits, stint
+func (eng *Engine) Start(out chan *model.Event) { // Drivers, laps, pits, stint
+	for event := range out {
+		eng.Handle(event)
+	}
 }
 
 func (eng *Engine) Handle(e *model.Event) {
-	fmt.Printf("From Agg. Handle: %v\n", e.Model.GetDateStart())
 	switch m := e.Model.(type) {
 	case *model.Interval:
 		eng.updateInterval(m)
@@ -34,7 +34,7 @@ func (eng *Engine) Handle(e *model.Event) {
 }
 
 func (e *Engine) updateInterval(data *model.Interval) {
-
+	fmt.Printf("Interval: %v\n", data.DateStart)
 }
 
 func (e *Engine) updateLap(data *model.Lap) {
