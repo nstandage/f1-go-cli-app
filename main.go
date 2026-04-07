@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	datasources "github.com/nstandage/f1-go-cli-app/datasource"
-	models "github.com/nstandage/f1-go-cli-app/model"
+	"github.com/nstandage/f1-go-cli-app/aggregator"
+	"github.com/nstandage/f1-go-cli-app/datasource"
+	"github.com/nstandage/f1-go-cli-app/model"
 	"github.com/nstandage/f1-go-cli-app/service"
 )
 
@@ -14,7 +15,7 @@ func main() {
 	var sessionKey = "11253"
 	service := service.OpenF1Service{}
 
-	hs := datasources.HistoricalSource{
+	hs := datasource.HistoricalSource{
 		Service: &service,
 	}
 
@@ -24,7 +25,18 @@ func main() {
 		return
 	}
 
-	c := make(chan models.Event)
-	hs.Load(context.Background(), sessionData, c)
+	c := make(chan *model.Event)
+	eng := datasource.ReplayEngine{
+		SessionData: sessionData,
+		Channel:     c,
+	}
 
+	ag := aggregator.Engine{
+		Channel: c,
+	}
+
+	go hs.Load(&eng)
+	for event := range c {
+		ag.Handle(event)
+	}
 }

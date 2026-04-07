@@ -1,10 +1,10 @@
-package models
+package model
 
 import "time"
 
 type RaceControl struct {
 	Category        string    `json:"category"`
-	Date            time.Time `json:"date"`
+	DateStart       time.Time `json:"date"`
 	DriverNumber    int       `json:"driver_number"`
 	Flag            string    `json:"flag"`
 	LapNumber       uint      `json:"lap_number"`

@@ -1,4 +1,4 @@
-package models
+package model
 
 type Stint struct {
 	Compound       string `json:"compound"`

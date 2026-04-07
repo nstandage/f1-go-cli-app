@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Goroutine Deadlock Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    background: #0f1117;
+    color: #e2e8f0;
+    padding: 40px;
+    min-height: 100vh;
+  }
+  h1 {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    color: #94a3b8;
+    margin-bottom: 40px;
+  }
+
+  .section-title {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: 16px;
+  }
+
+  /* TIMELINE */
+  .timeline-wrapper {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 48px;
+  }
+
+  .scenario {
+    flex: 1;
+    background: #1e2130;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #2d3148;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .scenario.bad { border-color: #f87171; }
+  .scenario.good { border-color: #4ade80; }
+
+  .scenario-label {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  .bad .scenario-label { background: #7f1d1d; color: #fca5a5; }
+  .good .scenario-label { background: #14532d; color: #86efac; }
+
+  .threads {
+    display: flex;
+    gap: 0;
+    position: relative;
+  }
+
+  .thread-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .thread-header {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+    padding: 4px 10px;
+    border-radius: 4px;
+  }
+  .main-header { background: #1e3a5f; color: #93c5fd; }
+  .goroutine-header { background: #3b1f5e; color: #c4b5fd; }
+  .channel-header { background: #1a2e1a; color: #86efac; }
+
+  .step {
+    width: 100%;
+    margin-bottom: 2px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .step.running { background: #1e3a5f; color: #93c5fd; border: 1px solid #3b6fad; }
+  .step.blocked { background: #3b1e1e; color: #f87171; border: 1px solid #7f3535; }
+  .step.waiting { background: #2d2d1e; color: #fcd34d; border: 1px solid #7a6020; }
+  .step.sending { background: #3b1f5e; color: #c4b5fd; border: 1px solid #6d4fa8; }
+  .step.receiving { background: #1a2e1a; color: #86efac; border: 1px solid #2e6b3a; }
+  .step.empty { background: transparent; border: 1px dashed #2d3148; color: #374151; }
+  .step.dead { background: #3b1e1e; color: #f87171; border: 1px solid #7f3535; font-weight: 700; }
+  .step.success { background: #14532d; color: #86efac; border: 1px solid #2d8a4e; font-weight: 700; }
+  .step.not-reached { background: #1a1a1a; color: #4b5563; border: 1px dashed #2a2a2a; font-style: italic; }
+
+  .time-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: 36px;
+    padding-right: 8px;
+    font-size: 10px;
+    color: #4b5563;
+    align-items: flex-end;
+    min-width: 50px;
+  }
+  .time-label {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+  }
+
+  .arrow-container {
+    position: relative;
+    width: 40px;
+    display: flex;
+    flex-direction: column;
+    padding-top: 36px;
+    gap: 2px;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .arrow-row {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: 18px;
+  }
+
+  /* CONCEPT BOXES */
+  .concepts {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .concept-box {
+    flex: 1;
+    background: #1e2130;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #2d3148;
+  }
+  .concept-title {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #f1f5f9;
+  }
+  .concept-body {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #94a3b8;
+  }
+  .highlight { color: #fcd34d; }
+  .highlight-blue { color: #93c5fd; }
+  .highlight-purple { color: #c4b5fd; }
+  .highlight-green { color: #86efac; }
+  .highlight-red { color: #f87171; }
+
+  /* CODE COMPARISON */
+  .code-compare {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 48px;
+  }
+  .code-block {
+    flex: 1;
+    background: #0d1117;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #2d3148;
+  }
+  .code-block.bad { border-color: #f87171; }
+  .code-block.good { border-color: #4ade80; }
+  .code-header {
+    padding: 10px 16px;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bad .code-header { background: #2d1515; color: #fca5a5; }
+  .good .code-header { background: #0f2d1a; color: #86efac; }
+  pre {
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .line { display: block; }
+  .line-bad { color: #f87171; }
+  .line-good { color: #86efac; }
+  .line-neutral { color: #94a3b8; }
+  .line-comment { color: #4b5563; }
+  .line-keyword { color: #c4b5fd; }
+  .line-number { color: #4b5563; user-select: none; margin-right: 12px; }
+
+  /* ANALOGY */
+  .analogy {
+    background: #1a1f35;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #2d3a5e;
+    margin-bottom: 0;
+  }
+  .analogy-title {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #93c5fd;
+    margin-bottom: 12px;
+  }
+  .analogy-body {
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.8;
+    color: #94a3b8;
+  }
+  .emoji { font-style: normal; }
+</style>
+</head>
+<body>
+
+<h1>Why Your Goroutine is Hanging</h1>
+<p class="subtitle">A visual guide to channels, goroutines, and deadlocks in Go</p>
+
+<!-- CONCEPTS -->
+<p class="section-title">The Two Key Concepts</p>
+<div class="concepts">
+  <div class="concept-box">
+    <div class="concept-title">🔀 Goroutines</div>
+    <div class="concept-body">
+      A goroutine is a <span class="highlight-blue">lightweight thread</span> that runs concurrently alongside your main program. You launch one with <span class="highlight-purple">go someFunction()</span>. The key thing: launching a goroutine doesn't pause your current code — both run at the same time. But if your main goroutine gets <span class="highlight-red">blocked</span> before launching it, it never starts.
+    </div>
+  </div>
+  <div class="concept-box">
+    <div class="concept-title">📡 Unbuffered Channels</div>
+    <div class="concept-body">
+      An unbuffered channel (<span class="highlight-purple">make(chan *Event)</span>) is a <span class="highlight">synchronous hand-off</span>. A sender (<span class="highlight-purple">c &lt;- value</span>) will <span class="highlight-red">block and wait</span> until a receiver is ready. A receiver (<span class="highlight-green">&lt;-c</span>) will <span class="highlight-red">block and wait</span> until a sender is ready. Both sides must be ready simultaneously — like a relay baton pass.
+    </div>
+  </div>
+  <div class="concept-box">
+    <div class="concept-title">💀 Deadlock</div>
+    <div class="concept-body">
+      A deadlock happens when a goroutine is <span class="highlight-red">waiting for something that will never happen</span>. In your case: main is waiting for data on a channel, but nothing will ever send to that channel because the goroutine that would do the sending hasn't been started yet.
+    </div>
+  </div>
+</div>
+
+<!-- TIMELINE DIAGRAMS -->
+<p class="section-title" style="margin-top:40px;">What Happens Over Time</p>
+<div class="timeline-wrapper">
+
+  <!-- BAD -->
+  <div class="scenario bad">
+    <div class="scenario-label">❌ Your Current Code (Hangs)</div>
+    <div style="display:flex; gap:0;">
+      <div class="time-labels">
+        <div class="time-label">T=1</div>
+        <div class="time-label">T=2</div>
+        <div class="time-label">T=3</div>
+        <div class="time-label">T=4</div>
+        <div class="time-label">T=5</div>
+        <div class="time-label">T=∞</div>
+      </div>
+      <div class="threads">
+        <div class="thread-col">
+          <div class="thread-header main-header">Main Goroutine</div>
+          <div class="step running">Fetches session data from API</div>
+          <div class="step running">Creates channel c</div>
+          <div class="step running">Creates ReplayEngine + AggEngine</div>
+          <div class="step blocked">ag.Handle(&lt;-c) 🚫<br><small>BLOCKED — waiting for data</small></div>
+          <div class="step not-reached">go hs.Load(&eng)<br><small>never reached</small></div>
+          <div class="step dead">DEADLOCK 💀</div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-row"></div>
+          <div class="arrow-row"></div>
+          <div class="arrow-row"></div>
+          <div class="arrow-row" style="color:#f87171; font-size:13px;">📡</div>
+          <div class="arrow-row"></div>
+          <div class="arrow-row"></div>
+        </div>
+        <div class="thread-col">
+          <div class="thread-header goroutine-header">Goroutine (Load)</div>
+          <div class="step empty">—</div>
+          <div class="step empty">—</div>
+          <div class="step empty">—</div>
+          <div class="step empty">—</div>
+          <div class="step not-reached">Never launched</div>
+          <div class="step not-reached">Never sends to c</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px; font-family:'Segoe UI',sans-serif; font-size:12px; color:#f87171; line-height:1.6;">
+      ⚠️ The receiver arrives at the channel at T=4, but the sender hasn't been created yet. Main blocks forever.
+    </div>
+  </div>
+
+  <!-- GOOD -->
+  <div class="scenario good">
+    <div class="scenario-label">✅ Fixed Code (Works)</div>
+    <div style="display:flex; gap:0;">
+      <div class="time-labels">
+        <div class="time-label">T=1</div>
+        <div class="time-label">T=2</div>
+        <div class="time-label">T=3</div>
+        <div class="time-label">T=4</div>
+        <div class="time-label">T=5</div>
+        <div class="time-label">T=6</div>
+      </div>
+      <div class="threads">
+        <div class="thread-col">
+          <div class="thread-header main-header">Main Goroutine</div>
+          <div class="step running">Fetches session data from API</div>
+          <div class="step running">Creates channel c</div>
+          <div class="step running">Creates ReplayEngine + AggEngine</div>
+          <div class="step running">go hs.Load(&amp;eng) 🚀<br><small>launches goroutine, keeps going</small></div>
+          <div class="step waiting">for event := range c<br><small>waits — but sender exists now!</small></div>
+          <div class="step success">ag.Handle(event) ✅<br><small>processes each event</small></div>
+        </div>
+        <div class="arrow-container">
+          <div class="arrow-row"></div>
+          <div class="arrow-row"></div>
+          <div class="arrow-row"></div>
+          <div class="arrow-row"></div>
+          <div class="arrow-row" style="color:#86efac;">→</div>
+          <div class="arrow-row" style="color:#86efac;">→</div>
+        </div>
+        <div class="thread-col">
+          <div class="thread-header goroutine-header">Goroutine (Load)</div>
+          <div class="step empty">—</div>
+          <div class="step empty">—</div>
+          <div class="step empty">—</div>
+          <div class="step sending">Goroutine starts 🟢<br><small>begins StartStream()</small></div>
+          <div class="step sending">c &lt;- &amp;event<br><small>sends first event</small></div>
+          <div class="step sending">c &lt;- &amp;event<br><small>sends next events...</small></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px; font-family:'Segoe UI',sans-serif; font-size:12px; color:#86efac; line-height:1.6;">
+      ✅ The goroutine is launched at T=4 before main tries to receive. Both sides exist, the hand-off works.
+    </div>
+  </div>
+
+</div>
+
+<!-- CODE COMPARISON -->
+<p class="section-title">The Code Side by Side</p>
+<div class="code-compare">
+  <div class="code-block bad">
+    <div class="code-header">❌ Broken — receiver before sender</div>
+    <pre><span class="line line-neutral"><span class="line-number">38</span><span class="line-bad">ag.Handle(&lt;-c)</span>      <span class="line-comment">// blocks here ← main is stuck</span></span>
+<span class="line line-neutral"><span class="line-number">40</span><span class="line-neutral">go hs.Load(&amp;eng)</span>    <span class="line-comment">// never reached</span></span></pre>
+  </div>
+  <div class="code-block good">
+    <div class="code-header">✅ Fixed — sender before receiver</div>
+    <pre><span class="line line-neutral"><span class="line-number">38</span><span class="line-good">go hs.Load(&amp;eng)</span>    <span class="line-comment">// launch sender first</span></span>
+<span class="line line-neutral"><span class="line-number">39</span><span class="line-good">for e := range c {</span>  <span class="line-comment">// now safe to receive</span></span>
+<span class="line line-neutral"><span class="line-number">40</span><span class="line-good">    ag.Handle(e)</span>    <span class="line-comment">// process each event</span></span>
+<span class="line line-neutral"><span class="line-number">41</span><span class="line-good">}</span></span></pre>
+  </div>
+</div>
+
+<!-- ANALOGY -->
+<div class="analogy">
+  <div class="analogy-title">🎾 The Real-World Analogy</div>
+  <div class="analogy-body">
+    An unbuffered channel is like a tennis ball machine and a player. The <span style="color:#c4b5fd">goroutine (ball machine)</span> fires balls into the channel. The <span style="color:#93c5fd">main goroutine (player)</span> stands at the other end ready to hit them.<br><br>
+    Your current code makes the <span style="color:#93c5fd">player show up and get into ready stance first</span> — but then <span style="color:#f87171">never turns the machine on</span>. The player just stands there forever. The fix: <span style="color:#86efac">turn the machine on first</span>, then have the player step up to receive.
+  </div>
+</div>
+
+</body>
+</html>

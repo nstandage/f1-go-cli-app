@@ -1,80 +1,27 @@
 package model
 
-type EventType int
-
-const (
-	DriverEventType EventType = iota
-	IntervalEventType
-	LapEventType
-	LocationEventType
-	MeetingEventType
-	PitEventType
-	PositionEventType
-	RaceControlEventType
-	SessionEventType
-	StintEventType
+import (
+	"time"
 )
 
-type Event interface {
-	EventType() EventType
+type Event struct {
+	Model EventModel
 }
 
-type DriverEvent struct {
-	data Driver
+type EventModel interface {
+	GetDateStart() time.Time
 }
 
-func (d *DriverEvent) EventType() EventType { return DriverEventType }
+func (i *Interval) GetDateStart() time.Time { return i.DateStart }
 
-type IntervalEvent struct {
-	data Interval
-}
+func (l *Lap) GetDateStart() time.Time { return l.DateStart }
 
-func (i *IntervalEvent) EventType() EventType { return IntervalEventType }
+func (l *Location) GetDateStart() time.Time { return l.DateStart }
 
-type LapEvent struct {
-	data Lap
-}
+func (m *Meeting) GetDateStart() time.Time { return m.DateStart } // remove?
 
-func (l *LapEvent) EventType() EventType { return LapEventType }
+func (p *Position) GetDateStart() time.Time { return p.DateStart }
 
-type LocationEvent struct {
-	data Location
-}
+func (r *RaceControl) GetDateStart() time.Time { return r.DateStart }
 
-func (l *LocationEvent) EventType() EventType { return LocationEventType }
-
-type MeetingEvent struct {
-	data Meeting
-}
-
-func (m *MeetingEvent) EventType() EventType { return MeetingEventType }
-
-type PitEvent struct {
-	data Pit
-}
-
-func (p *PitEvent) EventType() EventType { return PitEventType }
-
-type PositionEvent struct {
-	data Position
-}
-
-func (p *PositionEvent) EventType() EventType { return PositionEventType }
-
-type RaceControlEvent struct {
-	data RaceControl
-}
-
-func (r *RaceControlEvent) EventType() EventType { return RaceControlEventType }
-
-type SessionEvent struct {
-	data Session
-}
-
-func (s *SessionEvent) EventType() EventType { return SessionEventType }
-
-type StintEvent struct {
-	data Stint
-}
-
-func (s *StintEvent) EventType() EventType { return StintEventType }
+func (s *Session) GetDateStart() time.Time { return s.DateStart } // remove?
