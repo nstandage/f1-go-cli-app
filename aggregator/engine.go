@@ -1,13 +1,13 @@
 package aggregator
 
 import (
-	"fmt"
-
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
 type Engine struct {
 	RaceData *model.RaceData
+	program  *tea.Program
 }
 
 func (eng *Engine) Start(out chan *model.Event) { // Drivers, laps, pits, stint
@@ -34,7 +34,8 @@ func (eng *Engine) handle(e *model.Event) {
 }
 
 func (e *Engine) updateInterval(data *model.Interval) {
-	fmt.Printf("Interval: %v\n", data.DateStart)
+	// fmt.Printf("Interval: %v\n", data.DateStart)
+	e.program.Send(data)
 }
 
 func (e *Engine) updateLap(data *model.Lap) {
