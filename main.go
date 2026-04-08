@@ -19,13 +19,13 @@ func main() {
 		Service: &service,
 	}
 
-	sessionData, err := hs.Fetch(context.Background(), sessionKey)
+	raceData, eventData, err := hs.Fetch(context.Background(), sessionKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	replay := datasource.ReplayEngine{SessionData: sessionData}
-	ag := aggregator.Engine{}
+	replay := datasource.ReplayEngine{EventData: eventData}
+	ag := aggregator.Engine{RaceData: raceData}
 
 	c := make(chan *model.Event)
 	go ag.Start(c)

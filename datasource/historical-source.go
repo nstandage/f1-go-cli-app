@@ -17,13 +17,17 @@ type HistoricalSource struct {
 }
 
 // Fetches data from server all at once.
-func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string) (*model.SessionData, error) {
-	session, err := hs.Service.FetchIntervals(ctx, sessionKey)
+func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string) (*model.RaceData, *model.EventData, error) {
+	var raceData model.RaceData
+	var eventData model.EventData
+	intervals, err := hs.Service.FetchIntervals(ctx, sessionKey)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	sessionData := model.SessionData{
-		Intervals: *session,
+
+	for _, i := range *intervals {
+		eventData.EventModels = append(eventData.EventModels, &i)
 	}
-	return &sessionData, nil
+
+	return &raceData, &eventData, nil
 }

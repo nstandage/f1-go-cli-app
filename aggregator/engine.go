@@ -6,15 +6,19 @@ import (
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
-type Engine struct{}
+type Engine struct {
+	RaceData *model.RaceData
+}
 
 func (eng *Engine) Start(out chan *model.Event) { // Drivers, laps, pits, stint
+	eng.updateSesion(eng.RaceData.Session)
+	eng.updateMeeting(eng.RaceData.Meeting)
 	for event := range out {
-		eng.Handle(event)
+		eng.handle(event)
 	}
 }
 
-func (eng *Engine) Handle(e *model.Event) {
+func (eng *Engine) handle(e *model.Event) {
 	switch m := e.Model.(type) {
 	case *model.Interval:
 		eng.updateInterval(m)
@@ -22,14 +26,10 @@ func (eng *Engine) Handle(e *model.Event) {
 		eng.updateLap(m)
 	case *model.Location:
 		eng.updateLocation(m)
-	case *model.Meeting:
-		eng.updateMeeting(m)
 	case *model.Position:
 		eng.updatePosition(m)
 	case *model.RaceControl:
 		eng.updateRaceControl(m)
-	case *model.Session:
-		eng.updateSesion(m)
 	}
 }
 
