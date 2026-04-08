@@ -2,6 +2,7 @@ package datasource
 
 import (
 	"sort"
+	"time"
 
 	"github.com/nstandage/f1-go-cli-app/model"
 )
@@ -12,11 +13,12 @@ type ReplayEngine struct {
 
 func (eng *ReplayEngine) Start(out chan *model.Event) {
 	eng.sortEventData()
-	for _, i := range eng.EventData.EventModels {
-		ev := model.Event{
-			Model: i,
+	for i, em := range eng.EventData.EventModels {
+		if i > 0 {
+			duration := em.GetDateStart().Sub(eng.EventData.EventModels[i-1].GetDateStart())
+			time.Sleep(duration)
 		}
-		out <- &ev
+		out <- &model.Event{Model: em}
 	}
 	close(out)
 }

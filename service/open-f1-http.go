@@ -34,7 +34,7 @@ func (s *OpenF1HTTP) FetchDrivers(ctx context.Context, sessionKey string) (*[]mo
 }
 
 func (s *OpenF1HTTP) FetchIntervals(ctx context.Context, sessionKey string) (*[]model.Interval, error) {
-	url := fmt.Sprintf("%v/intervals?session_key=%v&interval<0.005", baseUrl, sessionKey)
+	url := fmt.Sprintf("%v/intervals?session_key=%v&interval<0.01", baseUrl, sessionKey)
 	interval, err := fetchData[[]model.Interval](ctx, url)
 	return interval, err
 }
