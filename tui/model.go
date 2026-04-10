@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/nstandage/f1-go-cli-app/model"
+	"github.com/nstandage/f1-go-cli-app/tui/view"
 )
 
 type Model struct {
@@ -44,13 +45,17 @@ func (m Model) View() tea.View {
 		content = "Loading..."
 	} else {
 		content = lipgloss.Place(m.width,
-			m.height,
+			m.height-6,
 			lipgloss.Center,
 			lipgloss.Center,
 			m.text,
 		)
 	}
-	v := tea.NewView(content)
+	barData := view.GetTestSessionBarData()
+	topBar := view.SessionBar(&barData)
+	legendBar := view.LegendBar()
+	combined := lipgloss.JoinVertical(lipgloss.Top, topBar, content, legendBar)
+	v := tea.NewView(combined)
 	v.AltScreen = true
 	return v
 }

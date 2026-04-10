@@ -32,7 +32,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// p := tea.NewProgram(tui.Model{}, tea.WithAltScreen())
 	p := tea.NewProgram(tui.Model{})
 
 	replay := datasource.ReplayEngine{EventData: eventData}
