@@ -15,6 +15,12 @@ var (
 	pitStopFastColor    = lipgloss.Color("#00e676")
 	pitStopAverageColor = lipgloss.Color("#ffd600")
 	pitStopSlowColor    = lipgloss.Color("#e3504d")
+
+	softTireColor   = lipgloss.Color("#e3504d")
+	mediumTireColor = lipgloss.Color("#ffd600")
+	hardTireColor   = lipgloss.BrightWhite
+	intTireColor    = lipgloss.Color("#00e676")
+	wetTireColor    = lipgloss.Color("#29CFE6")
 )
 
 var (
@@ -48,4 +54,12 @@ func defaultTextStyle(s string, c color.Color) string {
 		Bold(true)
 
 	return style.Render(s)
+}
+
+func styleStrings(rows []string, c color.Color) []string {
+	styledRows := make([]string, len(rows))
+	for i, row := range rows {
+		styledRows[i] = defaultTextStyle(row, c)
+	}
+	return styledRows
 }

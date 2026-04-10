@@ -39,26 +39,70 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() tea.View {
-	var content string
+	// var content string
 
-	if m.width == 0 {
-		content = "Loading..."
-	} else {
-		content = lipgloss.Place(m.width,
-			m.height-6,
-			lipgloss.Center,
-			lipgloss.Center,
-			m.text,
-		)
-	}
+	// if m.width == 0 {
+	// 	content = "Loading..."
+	// } else {
+	// 	content = lipgloss.Place(m.width,
+	// 		m.height-6,
+	// 		lipgloss.Center,
+	// 		lipgloss.Center,
+	// 		m.text,
+	// 	)
+	// }
 	barData := view.GetTestSessionBarData()
 	sessionBar := view.SessionBar(&barData)
 	legendBar := view.LegendBar()
 	positionColumn := view.PositionsColumn()
 	topBar := view.Topbar()
 
+	var driverNames = []string{
+		"VER", "NOR", "LEC", "PIA", "PER", "HAM", "ANT", "RUS", "HAD", "SAI",
+	}
+
+	var intervals = []string{
+		"----", "0.23", "0.85", "1.04", "3.22", "0.98", "0.12", "1.01", "+1 Lap", "+1 Lap",
+	}
+
+	var gapToLeaders = []string{
+		"----", "0.23", "1.85", "2.04", "3.22", "4.98", "5.12", "6.01", "26.79", "1.23.54",
+	}
+
+	var lastLap = []string{
+		"1.29.54", "1.29.64", "1.30.85", "1.30.04", "1.30.22", "1.31.98", "1.35.12", "1.36.01", "1.46.79", "1.23.54",
+	}
+
+	var pits = []string{
+		"1", "1", "1", "1", "0", "0", "2", "1", "0", "4",
+	}
+
+	var tires = []string{
+		"MEDIUM", "HARD", "SOFT", "MEDIUM", "MEDIUM", "SOFT", "SOFT", "INT", "WET", "SOFT",
+	}
+
+	var tireAge = []string{
+		"23", "22", "10", "17", "0", "1", "30", "29", "1", "2",
+	}
+	driverColumn := view.DefaultColumn(driverNames)
+	intervalColumn := view.DefaultColumn(intervals)
+	gapToLeaderColumn := view.DefaultColumn(gapToLeaders)
+	lastLapColumn := view.LastLapColumn(lastLap)
+	pitColumn := view.PitColumn(pits)
+	tiresColumn := view.TireColumn(tires)
+	tireAgeColumn := view.TireAgeColumn(tireAge)
+
 	combined := lipgloss.JoinVertical(lipgloss.Top, sessionBar, topBar,
-		lipgloss.JoinHorizontal(lipgloss.Top, positionColumn, content),
+		lipgloss.JoinHorizontal(lipgloss.Top,
+			positionColumn,
+			driverColumn,
+			intervalColumn,
+			gapToLeaderColumn,
+			lastLapColumn,
+			pitColumn,
+			tiresColumn,
+			tireAgeColumn,
+		),
 		legendBar,
 	)
 	v := tea.NewView(combined)
