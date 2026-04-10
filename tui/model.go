@@ -52,9 +52,15 @@ func (m Model) View() tea.View {
 		)
 	}
 	barData := view.GetTestSessionBarData()
-	topBar := view.SessionBar(&barData)
+	sessionBar := view.SessionBar(&barData)
 	legendBar := view.LegendBar()
-	combined := lipgloss.JoinVertical(lipgloss.Top, topBar, content, legendBar)
+	positionColumn := view.PositionsColumn()
+	topBar := view.Topbar()
+
+	combined := lipgloss.JoinVertical(lipgloss.Top, sessionBar, topBar,
+		lipgloss.JoinHorizontal(lipgloss.Top, positionColumn, content),
+		legendBar,
+	)
 	v := tea.NewView(combined)
 	v.AltScreen = true
 	return v
