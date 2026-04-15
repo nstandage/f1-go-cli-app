@@ -11,6 +11,8 @@ var (
 	bestOverallSectorColor  = lipgloss.Color("#ce93d8")
 	bestPersonalSectorColor = lipgloss.Color("#00e676")
 	slowSectorColor         = lipgloss.Color("#ffd600")
+	futureSectorColor       = lipgloss.Color("#3C3C3C")
+	pitLaneSectorColor      = lipgloss.Color("#e3504d")
 
 	pitStopFastColor    = lipgloss.Color("#00e676")
 	pitStopAverageColor = lipgloss.Color("#ffd600")
@@ -33,6 +35,7 @@ var (
 
 // Text
 var defaultDivider = defaultTextStyle(" • ", titleDarkColor)
+var raceControlBullet = defaultTextStyle("• ", slowSectorColor)
 
 const (
 	lightShadeBlock  = "░" // U+2591
