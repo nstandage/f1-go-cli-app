@@ -37,18 +37,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() tea.View {
-	// var content string
-
-	// if m.width == 0 {
-	// 	content = "Loading..."
-	// } else {
-	// 	content = lipgloss.Place(m.width,
-	// 		m.height-6,
-	// 		lipgloss.Center,
-	// 		lipgloss.Center,
-	// 		m.text,
-	// 	)
-	// }
 	barData := view.GetTestSessionBarData()
 	sessionBar := view.SessionBar(&barData)
 	legendBar := view.LegendBar()
@@ -115,27 +103,40 @@ func (m Model) View() tea.View {
 	raceControl := view.RaceControl(raceControlMessages)
 	pitStopView := view.PitStops(pitStops)
 
-	combined := lipgloss.JoinVertical(
+	driverView := lipgloss.JoinHorizontal(
+		lipgloss.Top,
+		positionColumn,
+		driverColumn,
+		intervalColumn,
+		gapToLeaderColumn,
+		lastLapColumn,
+		pitColumn,
+		tiresColumn,
+		tireAgeColumn,
+		laps,
+	)
+
+	topView := lipgloss.JoinVertical(
 		lipgloss.Top,
 		sessionBar,
 		topBar,
+	)
+
+	componentHeight := lipgloss.Height(driverView) +
+		lipgloss.Height(topView) +
+		lipgloss.Height(legendBar)
+
+	spacerSize := m.height - componentHeight
+
+	combined := lipgloss.JoinVertical(
+		lipgloss.Top,
+		topView,
 		lipgloss.JoinHorizontal(
 			lipgloss.Top,
 			lipgloss.JoinVertical(
 				lipgloss.Center,
-				lipgloss.JoinHorizontal(
-					lipgloss.Top,
-					positionColumn,
-					driverColumn,
-					intervalColumn,
-					gapToLeaderColumn,
-					lastLapColumn,
-					pitColumn,
-					tiresColumn,
-					tireAgeColumn,
-					laps,
-				),
-				view.Spacer(7),
+				driverView,
+				view.Spacer(spacerSize),
 				legendBar,
 			),
 			lipgloss.JoinVertical(
