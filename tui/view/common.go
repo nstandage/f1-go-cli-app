@@ -11,10 +11,18 @@ var (
 	bestOverallSectorColor  = lipgloss.Color("#ce93d8")
 	bestPersonalSectorColor = lipgloss.Color("#00e676")
 	slowSectorColor         = lipgloss.Color("#ffd600")
+	futureSectorColor       = lipgloss.Color("#3C3C3C")
+	pitLaneSectorColor      = lipgloss.Color("#e3504d")
 
 	pitStopFastColor    = lipgloss.Color("#00e676")
 	pitStopAverageColor = lipgloss.Color("#ffd600")
 	pitStopSlowColor    = lipgloss.Color("#e3504d")
+
+	softTireColor   = lipgloss.Color("#e3504d")
+	mediumTireColor = lipgloss.Color("#ffd600")
+	hardTireColor   = lipgloss.BrightWhite
+	intTireColor    = lipgloss.Color("#00e676")
+	wetTireColor    = lipgloss.Color("#29CFE6")
 )
 
 var (
@@ -27,6 +35,7 @@ var (
 
 // Text
 var defaultDivider = defaultTextStyle(" • ", titleDarkColor)
+var raceControlBullet = defaultTextStyle("• ", slowSectorColor)
 
 const (
 	lightShadeBlock  = "░" // U+2591
@@ -48,4 +57,16 @@ func defaultTextStyle(s string, c color.Color) string {
 		Bold(true)
 
 	return style.Render(s)
+}
+
+func styleStrings(rows []string, c color.Color) []string {
+	styledRows := make([]string, len(rows))
+	for i, row := range rows {
+		styledRows[i] = defaultTextStyle(row, c)
+	}
+	return styledRows
+}
+
+func Spacer(size int) string {
+	return lipgloss.NewStyle().Height(size).Render("")
 }

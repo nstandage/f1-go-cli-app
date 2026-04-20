@@ -11,6 +11,8 @@ func LegendBar() string {
 		defaultTextStyle("Personal Best", titleDarkColor),
 		defaultTextStyle(fullShadeBlock, slowSectorColor),
 		defaultTextStyle("Slower", titleDarkColor),
+		defaultTextStyle(fullShadeBlock, pitLaneSectorColor),
+		defaultTextStyle("Pitlane", titleDarkColor),
 		defaultDivider,
 		defaultTextStyle("Pit Stop Colors:", lipgloss.White),
 		defaultTextStyle(fullShadeBlock, pitStopFastColor),
