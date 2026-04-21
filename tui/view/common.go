@@ -67,6 +67,6 @@ func styleStrings(rows []string, c color.Color) []string {
 	return styledRows
 }
 
-func Spacer(size int) string {
-	return lipgloss.NewStyle().Height(size).Render("")
+func Spacer(size uint) string {
+	return lipgloss.NewStyle().Height(int(size)).Render("")
 }

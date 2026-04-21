@@ -14,7 +14,8 @@ import (
 
 func main() {
 
-	var sessionKey = "11253"
+	var sessionKey = "9920"
+	var meetingKey = "1267"
 	service := service.OpenF1HTTP{}
 
 	f, err := tea.LogToFile("debug.log", "debug")
@@ -27,19 +28,28 @@ func main() {
 		Service: &service,
 	}
 
-	raceData, eventData, err := hs.Fetch(context.Background(), sessionKey)
+	raceData, eventData, err := hs.Fetch(context.Background(), sessionKey, meetingKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	p := tea.NewProgram(tui.Model{})
+	engine := datasource.ReplayEngine{EventData: eventData}
+	datasource := aggregator.Datasource{
+		Meeting:   *raceData.Meeting,
+		Session:   *raceData.Session,
+		TotalLaps: raceData.TotalLaps,
+		IsReplay:  engine.IsReplay(),
+	}
+	ag := aggregator.Engine{Datasource: &datasource}
 
-	replay := datasource.ReplayEngine{EventData: eventData}
-	ag := aggregator.Engine{RaceData: raceData, Program: p}
+	p := tea.NewProgram(tui.Model{
+		Window: tui.Window{},
+		Engine: &ag,
+	})
 
 	c := make(chan *model.Event)
 	go ag.Start(c)
-	go replay.Start(c)
+	go engine.Start(c)
 
 	if _, err := p.Run(); err != nil {
 		log.Fatal(err)

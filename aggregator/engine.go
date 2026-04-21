@@ -1,18 +1,16 @@
 package aggregator
 
 import (
-	tea "charm.land/bubbletea/v2"
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
+var numberOfRaceControls = 6
+
 type Engine struct {
-	RaceData *model.RaceData
-	Program  *tea.Program
+	Datasource *Datasource
 }
 
 func (eng *Engine) Start(out chan *model.Event) { // Drivers, laps, pits, stint
-	eng.updateSesion(eng.RaceData.Session)
-	eng.updateMeeting(eng.RaceData.Meeting)
 	for event := range out {
 		eng.handle(event)
 	}
@@ -34,8 +32,7 @@ func (eng *Engine) handle(e *model.Event) {
 }
 
 func (e *Engine) updateInterval(data *model.Interval) {
-	// fmt.Printf("Interval: %v\n", data.DateStart)
-	e.Program.Send(data)
+	// e.Program.Send(data)
 }
 
 func (e *Engine) updateLap(data *model.Lap) {
@@ -54,10 +51,51 @@ func (e *Engine) updatePosition(data *model.Position) {
 
 }
 
-func (e *Engine) updateRaceControl(data *model.RaceControl) {
-
+func (e *Engine) updateRaceControl(rc *model.RaceControl) {
+	e.Datasource.RaceControl = appendCapped(e.Datasource.RaceControl, *rc, numberOfRaceControls)
 }
 
 func (e *Engine) updateSesion(data *model.Session) {
 
+}
+
+func (e *Engine) updateStartingGrid(data []model.StartingGrid) {
+
+}
+
+func (e *Engine) GetSnapshot(offset uint) Snapshot {
+	sessionBar := SessionBarSnapShot{
+		EventName:        e.Datasource.Meeting.MeetingOfficialName,
+		EventType:        e.Datasource.Session.SessionType,
+		CurrentLap:       0,
+		FastestLapNumber: 11,
+		TotalLaps:        e.Datasource.TotalLaps,
+		IsReplay:         e.Datasource.IsReplay,
+		EventDate:        e.Datasource.Session.DateStart,
+	}
+	return Snapshot{
+		SessionBar:      sessionBar,
+		RaceControlMsgs: e.getRaceControlMessages(),
+	}
+}
+
+func (e *Engine) getRaceControlMessages() []string {
+	strs := []string{}
+	for _, rc := range e.Datasource.RaceControl {
+		strs = append(strs, rc.Message)
+	}
+
+	return strs
+}
+
+func (e *Engine) HistoryLen() int {
+	return len(e.Datasource.history)
+}
+
+func appendCapped[T any](s []T, val T, max int) []T {
+	s = append(s, val)
+	if len(s) > max {
+		s = s[1:]
+	}
+	return s
 }

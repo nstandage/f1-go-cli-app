@@ -1,35 +1,53 @@
 package tui
 
 import (
+	"time"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/nstandage/f1-go-cli-app/model"
+	"github.com/nstandage/f1-go-cli-app/aggregator"
 	"github.com/nstandage/f1-go-cli-app/tui/view"
 )
 
 type Model struct {
+	Window   Window
+	Engine   *aggregator.Engine
+	offset   uint
+	isPaused bool
+}
+
+type Window struct {
 	width  int
 	height int
-	text   string
+}
+
+type TickMsg time.Time
+
+func tick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return TickMsg(t)
+	})
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	m.offset = 0
+	m.isPaused = false
+	m.Window = Window{}
+	return tick()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
+		m.Window.width = msg.Width
+		m.Window.height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		}
-	case *model.Interval:
-		m.text = msg.DateStart.String()
-		return m, nil
+	case TickMsg:
+		return m, tick()
 	default:
 		// log.Printf("Unable to read msg of type: %T", msg)
 	}
@@ -37,8 +55,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() tea.View {
-	barData := view.GetTestSessionBarData()
-	sessionBar := view.SessionBar(&barData)
+	snapshot := m.Engine.GetSnapshot(0)
+	sessionBar := view.SessionBar(&snapshot.SessionBar)
 	legendBar := view.LegendBar()
 	positionColumn := view.PositionsColumn()
 	lapSectors := [][]int{
@@ -81,12 +99,7 @@ func (m Model) View() tea.View {
 		"23", "22", "10", "17", "0", "1", "30", "29", "1", "2",
 	}
 
-	raceControlMessages := []string{
-		"CAR 43 (COL) TIME 1:43.165 DELETED - TRACK LIMITS AT TURN 13 LAP 21 14:47:52",
-		"SAFETY CAR DEPLOYED",
-		"MEDICAL CAR DEPLOYED",
-		"TURN 13 INCIDENT INVOLVING CARS 43 (COL) AND 87 (BEA) NOTED",
-	}
+	raceControlMessages := snapshot.RaceControlMsgs
 
 	pitStops := []float64{
 		3.0, 3.2, 3.8, 2.99, 3.12,
@@ -126,7 +139,7 @@ func (m Model) View() tea.View {
 		lipgloss.Height(topView) +
 		lipgloss.Height(legendBar)
 
-	spacerSize := m.height - componentHeight
+	var spacerSize uint = uint(m.Window.height - componentHeight)
 
 	combined := lipgloss.JoinVertical(
 		lipgloss.Top,
