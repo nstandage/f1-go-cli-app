@@ -1,20 +1,19 @@
 package aggregator
 
 import (
-	"time"
-
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
 type Datasource struct {
-	Meeting     model.Meeting
-	Session     model.Session
-	history     []Snapshot
-	drivers     map[uint]Driver // mapped to DriverNumber
-	RaceControl []model.RaceControl
-	Pitstops    []model.Pit
-	TotalLaps   uint
-	IsReplay    bool
+	history      []Snapshot
+	Drivers      map[uint]*Driver // mapped to DriverNumber
+	RaceControl  []model.RaceControl
+	Pitstops     []model.Pit
+	TotalLaps    uint
+	IsReplay     bool
+	Session      *model.Session
+	Meeting      *model.Meeting
+	StartingGrid []model.StartingGrid
 }
 
 type Driver struct {
@@ -25,13 +24,30 @@ type Driver struct {
 	IsOut            bool
 	Interval         float32
 	ToLeader         float32
-	LastLap          time.Time
+	LastLap          float64
 	Stint            *model.Stint
 }
 
-type StartingInfo struct {
-	Session      *model.Session
-	Meeting      *model.Meeting
-	StartingGrid []model.StartingGrid
-	drivers      []model.Driver
+func ConvertDrivers(ds []model.Driver) map[uint]*Driver {
+	drivers := make(map[uint]*Driver, len(ds))
+	for _, d := range ds {
+		driver := Driver{
+			Number: d.DriverNumber,
+			Info:   &d,
+		}
+		drivers[d.DriverNumber] = &driver
+	}
+
+	return drivers
+}
+
+func (ds *Datasource) AddStartingGrid() {
+	for _, sg := range ds.StartingGrid {
+		driver, ok := ds.Drivers[sg.DriverNumber]
+		if ok {
+			driver.StartingPosition = sg.Position
+			driver.Position = sg.Position
+			driver.LastLap = sg.LapDuration
+		}
+	}
 }

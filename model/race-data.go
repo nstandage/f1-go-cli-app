@@ -1,9 +1,10 @@
 package model
 
 type RaceData struct {
-	Meeting   *Meeting
-	Session   *Session
-	Drivers   []Driver
-	Stints    []Stint
-	TotalLaps uint
+	Meeting      *Meeting
+	Session      *Session
+	Drivers      []Driver
+	Stints       []Stint
+	TotalLaps    uint
+	StartingGrid []StartingGrid
 }

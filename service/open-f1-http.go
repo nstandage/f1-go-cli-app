@@ -24,6 +24,15 @@ func (s *OpenF1HTTP) FetchSessions(ctx context.Context, sessionKey string) ([]mo
 	return *session, err
 }
 
+func (s *OpenF1HTTP) FetchMeetingSessions(ctx context.Context, meetingKey string) ([]model.Session, error) {
+	url := fmt.Sprintf("%v/sessions?meeting_key=%v", baseUrl, meetingKey)
+	session, err := fetchData[[]model.Session](ctx, url)
+	if session == nil {
+		return nil, fmt.Errorf("OpenF1HTTP.FetchMeetingSessions sessions == nil %w", err)
+	}
+	return *session, err
+}
+
 func (s *OpenF1HTTP) FetchMeetings(ctx context.Context, meetingKey string) ([]model.Meeting, error) {
 	url := fmt.Sprintf("%v/meetings?meeting_key=%v", baseUrl, meetingKey)
 	meeting, err := fetchData[[]model.Meeting](ctx, url)
@@ -103,6 +112,15 @@ func (s *OpenF1HTTP) FetchStint(ctx context.Context, sessionKey string) ([]model
 		return nil, fmt.Errorf("OpenF1HTTP.FetchStint stints == nil %w", err)
 	}
 	return *stints, err
+}
+
+func (s *OpenF1HTTP) FetchStartingGrid(ctx context.Context, sessionKey string) ([]model.StartingGrid, error) {
+	url := fmt.Sprintf("%v/starting_grid?session_key=%v", baseUrl, sessionKey)
+	grid, err := fetchData[[]model.StartingGrid](ctx, url)
+	if grid == nil {
+		return nil, fmt.Errorf("OpenF1HTTP.FetchStartingGrid startingGrids == nil %w", err)
+	}
+	return *grid, err
 }
 
 func fetchData[T any](ctx context.Context, url string) (*T, error) {

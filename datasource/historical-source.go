@@ -8,6 +8,25 @@ import (
 	"github.com/nstandage/f1-go-cli-app/service"
 )
 
+type SessionType string
+type SessionName string
+
+const (
+	FPType         SessionType = "Practice"
+	QualifyingType SessionType = "Qualifying"
+	RaceType       SessionType = "Race"
+)
+
+const (
+	FP1              SessionName = "Practice 1"
+	FP2              SessionName = "Practice 2"
+	FP3              SessionName = "Practice 3"
+	SprintQualifying SessionName = "Sprint Qualifying"
+	Sprint           SessionName = "Sprint"
+	Qualifying       SessionName = "Qualifying"
+	Race             SessionName = "Race"
+)
+
 type DataSource interface {
 	Start(meetingId string, ctx context.Context, out chan<- model.Event)
 	IsReplay() bool
@@ -34,12 +53,13 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - meetings is 0 %w", err)
 	}
 
-	sessions, err := hs.getSessions(ctx, rl, sessionKey)
+	sessions, err := hs.getMeetingSessions(ctx, rl, meetingKey)
 	if err != nil {
 		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - sessions failed %w", err)
 	}
 
-	if len(sessions) == 0 {
+	raceSession, err := getSessionByTypeAndName(sessions, RaceType, Race)
+	if err != nil {
 		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - sessions is 0 %w", err)
 	}
 
@@ -52,10 +72,26 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - raceControls is 0 %w", err)
 	}
 
-	raceData.Meeting = &meetings[0]
-	raceData.Session = &sessions[0]
-	raceData.TotalLaps = getLapCount(raceControls)
+	qSession, err := getSessionByTypeAndName(sessions, QualifyingType, Qualifying)
+	if err != nil {
+		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - Qualifying Session is 0 %w", err)
+	}
 
+	grid, err := hs.getStartingGrid(ctx, rl, qSession.GetSessionKey())
+	if err != nil {
+		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - Starting Grid failed %w", err)
+	}
+
+	drivers, err := hs.getDrivers(ctx, rl, sessionKey)
+	if err != nil {
+		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
+	}
+
+	raceData.Meeting = &meetings[0]
+	raceData.Session = raceSession
+	raceData.TotalLaps = getLapCount(raceControls)
+	raceData.StartingGrid = grid
+	raceData.Drivers = drivers
 	for _, rc := range raceControls {
 		eventData.EventModels = append(eventData.EventModels, &rc)
 	}
@@ -82,6 +118,22 @@ func getLapCountByNumber(rcs []model.RaceControl) uint {
 	return count
 }
 
+func getSessionByTypeAndName(ss []model.Session, st SessionType, sn SessionName) (*model.Session, error) {
+	for _, s := range ss {
+		if s.SessionType == string(st) && s.SessionName == string(sn) {
+			return &s, nil
+		}
+	}
+
+	var meetingKey uint = 0
+	err := fmt.Errorf("Couldn't find Session of type: %v and name: %v", st, sn)
+	if len(ss) > 0 {
+		meetingKey = ss[0].MeetingKey
+		err = fmt.Errorf("%v for meeting_key: %v", err, meetingKey)
+	}
+	return nil, err
+}
+
 func (hs *HistoricalSource) getMeetings(ctx context.Context, rl *service.RateLimiter, meetingKey string) ([]model.Meeting, error) {
 	rl.Wait()
 	return hs.Service.FetchMeetings(ctx, meetingKey)
@@ -92,7 +144,23 @@ func (hs *HistoricalSource) getSessions(ctx context.Context, rl *service.RateLim
 	return hs.Service.FetchSessions(ctx, sessionKey)
 }
 
+func (hs *HistoricalSource) getMeetingSessions(ctx context.Context, rl *service.RateLimiter, meetingKey string) ([]model.Session, error) {
+	rl.Wait()
+	return hs.Service.FetchMeetingSessions(ctx, meetingKey)
+}
+
 func (hs *HistoricalSource) getRaceControls(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.RaceControl, error) {
 	rl.Wait()
 	return hs.Service.FetchRaceControls(ctx, sessionKey)
+}
+
+// API requires a Qualifying session_key
+func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.StartingGrid, error) {
+	rl.Wait()
+	return hs.Service.FetchStartingGrid(ctx, sessionKey)
+}
+
+func (hs *HistoricalSource) getDrivers(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.Driver, error) {
+	rl.Wait()
+	return hs.Service.FetchDrivers(ctx, sessionKey)
 }

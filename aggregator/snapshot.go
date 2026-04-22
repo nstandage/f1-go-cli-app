@@ -7,6 +7,8 @@ import (
 type Snapshot struct {
 	SessionBar      SessionBarSnapShot
 	RaceControlMsgs []string
+	DriverNames     []string
+	LastLap         []string
 }
 
 type SessionBarSnapShot struct {

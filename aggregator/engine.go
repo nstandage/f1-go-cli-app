@@ -1,6 +1,9 @@
 package aggregator
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
@@ -76,6 +79,8 @@ func (e *Engine) GetSnapshot(offset uint) Snapshot {
 	return Snapshot{
 		SessionBar:      sessionBar,
 		RaceControlMsgs: e.getRaceControlMessages(),
+		DriverNames:     e.getDriverNames(),
+		LastLap:         e.getLastLap(),
 	}
 }
 
@@ -98,4 +103,39 @@ func appendCapped[T any](s []T, val T, max int) []T {
 		s = s[1:]
 	}
 	return s
+}
+
+func (e *Engine) getDriverNames() []string {
+	strs := make([]string, len(e.Datasource.Drivers))
+	for _, d := range e.Datasource.Drivers {
+		strs[d.Position-1] = d.Info.BroadcastName
+	}
+
+	return strs
+}
+
+func (e *Engine) getLastLap() []string {
+	strs := make([]string, len(e.Datasource.Drivers))
+	for _, d := range e.Datasource.Drivers {
+		// lastLapInSec := d.LastLap
+		// times := time.Duration(lastLapInSec * float64(time.Second))
+		// str := times.Minutes()
+		// strs[d.Position-1] = strconv.FormatFloat(str, 'f', 2, 64)
+		strs[d.Position-1] = formatLapTime(d.LastLap)
+	}
+	return strs
+}
+
+func formatLapTime(seconds float64) string {
+	if seconds <= 0 {
+		return "--:--.---"
+	}
+
+	totalMs := int(math.Round(seconds * 1000))
+	totalSecs := totalMs / 1000
+	ms := totalMs % 1000
+	secs := totalSecs % 60
+	mins := totalSecs / 60
+
+	return fmt.Sprintf("%d:%02d.%03d", mins, secs, ms)
 }

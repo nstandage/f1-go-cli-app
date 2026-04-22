@@ -13,9 +13,8 @@ import (
 )
 
 func main() {
-
-	var sessionKey = "9920"
-	var meetingKey = "1267"
+	var sessionKey = "9939"
+	var meetingKey = "1265"
 	service := service.OpenF1HTTP{}
 
 	f, err := tea.LogToFile("debug.log", "debug")
@@ -35,11 +34,14 @@ func main() {
 
 	engine := datasource.ReplayEngine{EventData: eventData}
 	datasource := aggregator.Datasource{
-		Meeting:   *raceData.Meeting,
-		Session:   *raceData.Session,
-		TotalLaps: raceData.TotalLaps,
-		IsReplay:  engine.IsReplay(),
+		Meeting:      raceData.Meeting,
+		Session:      raceData.Session,
+		TotalLaps:    raceData.TotalLaps,
+		IsReplay:     engine.IsReplay(),
+		StartingGrid: raceData.StartingGrid,
+		Drivers:      aggregator.ConvertDrivers(raceData.Drivers),
 	}
+	datasource.AddStartingGrid()
 	ag := aggregator.Engine{Datasource: &datasource}
 
 	p := tea.NewProgram(tui.Model{
