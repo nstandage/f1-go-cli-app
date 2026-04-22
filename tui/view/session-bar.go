@@ -5,51 +5,30 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
+	"github.com/nstandage/f1-go-cli-app/aggregator"
 )
 
-//Contains event name/type lap count, fastest lap, whether it's historical or live, date of the event.
-
-type SessionBarData struct {
-	EventName        string
-	EventType        string
-	CurrentLap       int
-	TotalLaps        int
-	FastestLapTime   time.Time
-	FastestLapDriver string
-	FastestLapNumber int
-	StreamType       string
-	EventDate        time.Time
-}
-
-func GetTestSessionBarData() SessionBarData {
-	return SessionBarData{
-		EventName:        "Japanese Grand Prix",
-		EventType:        "Race",
-		CurrentLap:       12,
-		TotalLaps:        57,
-		FastestLapTime:   time.Now(),
-		FastestLapDriver: "NOR",
-		FastestLapNumber: 10,
-		StreamType:       "REPLAY",
-		EventDate:        time.Now(),
+// Contains event name/type lap count, fastest lap, whether it's historical or live, date of the event.
+func SessionBar(s *aggregator.SessionBarSnapShot) string {
+	var replayType string
+	if s.IsReplay {
+		replayType = "REPLAY"
+	} else {
+		replayType = "LIVE"
 	}
-}
-
-func SessionBar(d *SessionBarData) string {
-
 	return defaultBorderStyle().Render(
 		lipgloss.JoinHorizontal(
 			lipgloss.Center,
-			defaultTextStyle(d.EventName, title1Color),
+			defaultTextStyle(s.EventName, title1Color),
 			defaultDivider,
-			defaultTextStyle(d.EventType, title1Color),
+			defaultTextStyle(s.EventType, title1Color),
 			defaultDivider,
-			defaultTextStyle(fmt.Sprintf("Lap %v/%v", d.CurrentLap, d.TotalLaps), title2Color),
+			defaultTextStyle(fmt.Sprintf("Lap %v/%v", s.CurrentLap, s.TotalLaps), title2Color),
 			defaultDivider,
-			defaultTextStyle(fmt.Sprintf("Fastest: %v %v L%v", d.FastestLapDriver, d.FastestLapTime.Format(time.TimeOnly), d.FastestLapNumber), title3Color),
+			defaultTextStyle(fmt.Sprintf("Fastest: %v %v L%v", s.FastestLapDriver, s.FastestLapTime.Format(time.TimeOnly), s.FastestLapNumber), title3Color),
 			defaultDivider,
-			defaultTextStyle(d.StreamType, titleDarkColor),
+			defaultTextStyle(replayType, titleDarkColor),
 			defaultDivider,
-			defaultTextStyle(d.EventDate.Format(time.DateOnly), titleDarkColor),
+			defaultTextStyle(s.EventDate.Format("Mon, January 02, 2006"), titleDarkColor),
 		))
 }

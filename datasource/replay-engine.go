@@ -23,6 +23,10 @@ func (eng *ReplayEngine) Start(out chan *model.Event) {
 	close(out)
 }
 
+func (eng *ReplayEngine) IsReplay() bool {
+	return true
+}
+
 func (eng *ReplayEngine) sortEventData() {
 	sort.Slice(eng.EventData.EventModels, func(i, j int) bool {
 		return eng.EventData.EventModels[i].GetDateStart().Before(eng.EventData.EventModels[j].GetDateStart())
