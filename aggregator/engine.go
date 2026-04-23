@@ -4,17 +4,32 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/nstandage/f1-go-cli-app/datasource"
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
 var numberOfRaceControls = 6
 
 type Engine struct {
-	Datasource *Datasource
+	store      *Store
+	datasource datasource.DataSource
 }
 
-func (eng *Engine) Start(out chan *model.Event) { // Drivers, laps, pits, stint
-	for event := range out {
+func NewEngine(ds datasource.DataSource) *Engine {
+	return &Engine{
+		store:      &Store{},
+		datasource: ds,
+	}
+}
+
+func (eng *Engine) Start() {
+	raceData, c := eng.datasource.Start()
+	eng.setUpInitialStore(raceData)
+	eng.listen(c)
+}
+
+func (eng *Engine) listen(c <-chan *model.Event) {
+	for event := range c {
 		eng.handle(event)
 	}
 }
@@ -55,7 +70,7 @@ func (e *Engine) updatePosition(data *model.Position) {
 }
 
 func (e *Engine) updateRaceControl(rc *model.RaceControl) {
-	e.Datasource.RaceControl = appendCapped(e.Datasource.RaceControl, *rc, numberOfRaceControls)
+	e.store.RaceControl = appendCapped(e.store.RaceControl, *rc, numberOfRaceControls)
 }
 
 func (e *Engine) updateSesion(data *model.Session) {
@@ -66,18 +81,18 @@ func (e *Engine) updateStartingGrid(data []model.StartingGrid) {
 
 }
 
-func (e *Engine) GetSnapshot(offset uint) Snapshot {
-	sessionBar := SessionBarSnapShot{
-		EventName:        e.Datasource.Meeting.MeetingOfficialName,
-		EventType:        e.Datasource.Session.SessionType,
+func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
+	sessionBar := model.SessionBarSnapShot{
+		EventName:        e.store.Meeting.MeetingOfficialName,
+		EventType:        e.store.Session.SessionType,
 		CurrentLap:       0,
 		FastestLapNumber: 11,
-		TotalLaps:        e.Datasource.TotalLaps,
-		IsReplay:         e.Datasource.IsReplay,
-		EventDate:        e.Datasource.Session.DateStart,
+		TotalLaps:        e.store.TotalLaps,
+		IsReplay:         e.store.IsReplay,
+		EventDate:        e.store.Session.DateStart,
 	}
-	return Snapshot{
-		SessionBar:      sessionBar,
+	return &model.Snapshot{
+		SessionBar:      &sessionBar,
 		RaceControlMsgs: e.getRaceControlMessages(),
 		DriverNames:     e.getDriverNames(),
 		LastLap:         e.getLastLap(),
@@ -86,7 +101,7 @@ func (e *Engine) GetSnapshot(offset uint) Snapshot {
 
 func (e *Engine) getRaceControlMessages() []string {
 	strs := []string{}
-	for _, rc := range e.Datasource.RaceControl {
+	for _, rc := range e.store.RaceControl {
 		strs = append(strs, rc.Message)
 	}
 
@@ -94,7 +109,7 @@ func (e *Engine) getRaceControlMessages() []string {
 }
 
 func (e *Engine) HistoryLen() int {
-	return len(e.Datasource.history)
+	return len(e.store.history)
 }
 
 func appendCapped[T any](s []T, val T, max int) []T {
@@ -106,8 +121,8 @@ func appendCapped[T any](s []T, val T, max int) []T {
 }
 
 func (e *Engine) getDriverNames() []string {
-	strs := make([]string, len(e.Datasource.Drivers))
-	for _, d := range e.Datasource.Drivers {
+	strs := make([]string, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
 		strs[d.Position-1] = d.Info.BroadcastName
 	}
 
@@ -115,8 +130,8 @@ func (e *Engine) getDriverNames() []string {
 }
 
 func (e *Engine) getLastLap() []string {
-	strs := make([]string, len(e.Datasource.Drivers))
-	for _, d := range e.Datasource.Drivers {
+	strs := make([]string, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
 		// lastLapInSec := d.LastLap
 		// times := time.Duration(lastLapInSec * float64(time.Second))
 		// str := times.Minutes()
@@ -138,4 +153,35 @@ func formatLapTime(seconds float64) string {
 	mins := totalSecs / 60
 
 	return fmt.Sprintf("%d:%02d.%03d", mins, secs, ms)
+}
+
+func (eng *Engine) setUpInitialStore(rd *model.RaceData) {
+	eng.store.Meeting = rd.Meeting
+	eng.store.Session = rd.Session
+	eng.store.TotalLaps = rd.TotalLaps
+	eng.store.StartingGrid = rd.StartingGrid
+	eng.store.IsReplay = eng.datasource.IsReplay()
+	eng.store.Drivers = convertDrivers(rd.Drivers)
+
+	for _, sg := range eng.store.StartingGrid {
+		driver, ok := eng.store.Drivers[sg.DriverNumber]
+		if ok {
+			driver.StartingPosition = sg.Position
+			driver.Position = sg.Position
+			driver.LastLap = sg.LapDuration
+		}
+	}
+}
+
+func convertDrivers(ds []model.Driver) map[uint]*Driver {
+	drivers := make(map[uint]*Driver, len(ds))
+	for _, d := range ds {
+		driver := Driver{
+			Number: d.DriverNumber,
+			Info:   &d,
+		}
+		drivers[d.DriverNumber] = &driver
+	}
+
+	return drivers
 }

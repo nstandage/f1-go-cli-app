@@ -28,75 +28,89 @@ const (
 )
 
 type DataSource interface {
-	Start(meetingId string, ctx context.Context, out chan<- model.Event)
+	Start() (*model.RaceData, <-chan *model.Event)
 	IsReplay() bool
 }
 
 // Historical Source handles fetching all data from selected session at once and returns a sessionData object.
 type HistoricalSource struct {
-	Service *service.OpenF1HTTP
+	service   *service.OpenF1HTTP
+	raceData  *model.RaceData
+	eventData *model.EventData
+}
+
+func NewHistoricalSource(s *service.OpenF1HTTP) *HistoricalSource {
+	return &HistoricalSource{
+		service:   s,
+		raceData:  &model.RaceData{},
+		eventData: &model.EventData{},
+	}
 }
 
 // Fetches data from server all at once.
-func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetingKey string) (*model.RaceData, *model.EventData, error) {
-	rl := service.NewRateLimiter(2)
+func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetingKey string) error {
+	rl := NewRateLimiter(2)
 	defer rl.Stop()
-	var raceData model.RaceData
-	var eventData model.EventData
 
 	meetings, err := hs.getMeetings(ctx, rl, meetingKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricaSource.Fetch - meetings failed: %w", err)
+		return fmt.Errorf("HistoricaSource.Fetch - meetings failed: %w", err)
 	}
 
 	if len(meetings) == 0 {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - meetings is 0 %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - meetings is 0 %w", err)
 	}
 
 	sessions, err := hs.getMeetingSessions(ctx, rl, meetingKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - sessions failed %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - sessions failed %w", err)
 	}
 
 	raceSession, err := getSessionByTypeAndName(sessions, RaceType, Race)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - sessions is 0 %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - sessions is 0 %w", err)
 	}
 
 	raceControls, err := hs.getRaceControls(ctx, rl, sessionKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - raceControls failed %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - raceControls failed %w", err)
 	}
 
 	if len(raceControls) == 0 {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - raceControls is 0 %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - raceControls is 0 %w", err)
 	}
 
 	qSession, err := getSessionByTypeAndName(sessions, QualifyingType, Qualifying)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - Qualifying Session is 0 %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - Qualifying Session is 0 %w", err)
 	}
 
 	grid, err := hs.getStartingGrid(ctx, rl, qSession.GetSessionKey())
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - Starting Grid failed %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - Starting Grid failed %w", err)
 	}
 
 	drivers, err := hs.getDrivers(ctx, rl, sessionKey)
 	if err != nil {
-		return nil, nil, fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
+		return fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
 	}
 
-	raceData.Meeting = &meetings[0]
-	raceData.Session = raceSession
-	raceData.TotalLaps = getLapCount(raceControls)
-	raceData.StartingGrid = grid
-	raceData.Drivers = drivers
+	hs.raceData.Meeting = &meetings[0]
+	hs.raceData.Session = raceSession
+	hs.raceData.TotalLaps = getLapCount(raceControls)
+	hs.raceData.StartingGrid = grid
+	hs.raceData.Drivers = drivers
 	for _, rc := range raceControls {
-		eventData.EventModels = append(eventData.EventModels, &rc)
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &rc)
 	}
+	return nil
+}
 
-	return &raceData, &eventData, nil
+func (hs *HistoricalSource) Start() (*model.RaceData, <-chan *model.Event) {
+	replayEngine := ReplayEngine{EventData: hs.eventData}
+	c := make(chan *model.Event)
+	go replayEngine.Start(c)
+	return hs.raceData, c
 }
 
 func getLapCount(rcs []model.RaceControl) uint {
@@ -118,6 +132,10 @@ func getLapCountByNumber(rcs []model.RaceControl) uint {
 	return count
 }
 
+func (hs *HistoricalSource) IsReplay() bool {
+	return true
+}
+
 func getSessionByTypeAndName(ss []model.Session, st SessionType, sn SessionName) (*model.Session, error) {
 	for _, s := range ss {
 		if s.SessionType == string(st) && s.SessionName == string(sn) {
@@ -134,33 +152,33 @@ func getSessionByTypeAndName(ss []model.Session, st SessionType, sn SessionName)
 	return nil, err
 }
 
-func (hs *HistoricalSource) getMeetings(ctx context.Context, rl *service.RateLimiter, meetingKey string) ([]model.Meeting, error) {
+func (hs *HistoricalSource) getMeetings(ctx context.Context, rl *RateLimiter, meetingKey string) ([]model.Meeting, error) {
 	rl.Wait()
-	return hs.Service.FetchMeetings(ctx, meetingKey)
+	return hs.service.FetchMeetings(ctx, meetingKey)
 }
 
-func (hs *HistoricalSource) getSessions(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.Session, error) {
+func (hs *HistoricalSource) getSessions(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Session, error) {
 	rl.Wait()
-	return hs.Service.FetchSessions(ctx, sessionKey)
+	return hs.service.FetchSessions(ctx, sessionKey)
 }
 
-func (hs *HistoricalSource) getMeetingSessions(ctx context.Context, rl *service.RateLimiter, meetingKey string) ([]model.Session, error) {
+func (hs *HistoricalSource) getMeetingSessions(ctx context.Context, rl *RateLimiter, meetingKey string) ([]model.Session, error) {
 	rl.Wait()
-	return hs.Service.FetchMeetingSessions(ctx, meetingKey)
+	return hs.service.FetchMeetingSessions(ctx, meetingKey)
 }
 
-func (hs *HistoricalSource) getRaceControls(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.RaceControl, error) {
+func (hs *HistoricalSource) getRaceControls(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.RaceControl, error) {
 	rl.Wait()
-	return hs.Service.FetchRaceControls(ctx, sessionKey)
+	return hs.service.FetchRaceControls(ctx, sessionKey)
 }
 
 // API requires a Qualifying session_key
-func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.StartingGrid, error) {
+func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.StartingGrid, error) {
 	rl.Wait()
-	return hs.Service.FetchStartingGrid(ctx, sessionKey)
+	return hs.service.FetchStartingGrid(ctx, sessionKey)
 }
 
-func (hs *HistoricalSource) getDrivers(ctx context.Context, rl *service.RateLimiter, sessionKey string) ([]model.Driver, error) {
+func (hs *HistoricalSource) getDrivers(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Driver, error) {
 	rl.Wait()
-	return hs.Service.FetchDrivers(ctx, sessionKey)
+	return hs.service.FetchDrivers(ctx, sessionKey)
 }

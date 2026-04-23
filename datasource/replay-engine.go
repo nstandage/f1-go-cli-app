@@ -11,20 +11,17 @@ type ReplayEngine struct {
 	EventData *model.EventData
 }
 
-func (eng *ReplayEngine) Start(out chan *model.Event) {
+func (eng *ReplayEngine) Start(out chan<- *model.Event) {
+	defer close(out)
 	eng.sortEventData()
-	for i, em := range eng.EventData.EventModels {
+
+	for i, e := range eng.EventData.EventModels {
 		if i > 0 {
-			duration := em.GetDateStart().Sub(eng.EventData.EventModels[i-1].GetDateStart())
+			duration := e.GetDateStart().Sub(eng.EventData.EventModels[i-1].GetDateStart())
 			time.Sleep(duration)
 		}
-		out <- &model.Event{Model: em}
+		out <- &model.Event{Model: e}
 	}
-	close(out)
-}
-
-func (eng *ReplayEngine) IsReplay() bool {
-	return true
 }
 
 func (eng *ReplayEngine) sortEventData() {

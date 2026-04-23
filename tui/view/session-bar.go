@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"charm.land/lipgloss/v2"
-	"github.com/nstandage/f1-go-cli-app/aggregator"
+	"github.com/nstandage/f1-go-cli-app/model"
 )
 
 // Contains event name/type lap count, fastest lap, whether it's historical or live, date of the event.
-func SessionBar(s *aggregator.SessionBarSnapShot) string {
+func SessionBar(s *model.SessionBarSnapShot) string {
 	var replayType string
 	if s.IsReplay {
 		replayType = "REPLAY"

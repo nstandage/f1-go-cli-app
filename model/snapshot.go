@@ -1,11 +1,11 @@
-package aggregator
+package model
 
 import (
 	"time"
 )
 
 type Snapshot struct {
-	SessionBar      SessionBarSnapShot
+	SessionBar      *SessionBarSnapShot
 	RaceControlMsgs []string
 	DriverNames     []string
 	LastLap         []string

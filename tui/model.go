@@ -53,7 +53,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() tea.View {
 	snapshot := m.Engine.GetSnapshot(0)
-	sessionBar := view.SessionBar(&snapshot.SessionBar)
+	sessionBar := view.SessionBar(snapshot.SessionBar)
 	legendBar := view.LegendBar()
 	positionColumn := view.PositionsColumn()
 	lapSectors := [][]int{

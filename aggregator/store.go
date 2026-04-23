@@ -4,8 +4,8 @@ import (
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
-type Datasource struct {
-	history      []Snapshot
+type Store struct {
+	history      []model.Snapshot
 	Drivers      map[uint]*Driver // mapped to DriverNumber
 	RaceControl  []model.RaceControl
 	Pitstops     []model.Pit
@@ -26,28 +26,4 @@ type Driver struct {
 	ToLeader         float32
 	LastLap          float64
 	Stint            *model.Stint
-}
-
-func ConvertDrivers(ds []model.Driver) map[uint]*Driver {
-	drivers := make(map[uint]*Driver, len(ds))
-	for _, d := range ds {
-		driver := Driver{
-			Number: d.DriverNumber,
-			Info:   &d,
-		}
-		drivers[d.DriverNumber] = &driver
-	}
-
-	return drivers
-}
-
-func (ds *Datasource) AddStartingGrid() {
-	for _, sg := range ds.StartingGrid {
-		driver, ok := ds.Drivers[sg.DriverNumber]
-		if ok {
-			driver.StartingPosition = sg.Position
-			driver.Position = sg.Position
-			driver.LastLap = sg.LapDuration
-		}
-	}
 }
