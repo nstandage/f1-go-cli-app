@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type RaceData struct {
 	Meeting      *Meeting
 	Session      *Session
@@ -7,4 +9,5 @@ type RaceData struct {
 	Stints       []Stint
 	TotalLaps    uint
 	StartingGrid []StartingGrid
+	SessionStart time.Time
 }

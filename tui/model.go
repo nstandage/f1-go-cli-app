@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -29,6 +30,7 @@ func tick() tea.Cmd {
 	})
 }
 
+
 func (m Model) Init() tea.Cmd {
 	return tick()
 }
@@ -41,6 +43,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
+			log.Println("-----------------------")
 			return m, tea.Quit
 		}
 	case TickMsg:
@@ -69,13 +72,16 @@ func (m Model) View() tea.View {
 	topBar := view.Topbar(lapSectorCount)
 
 	driverNames := snapshot.DriverNames
-	intervals := []string{
-		"----", "0.23", "0.85", "1.04", "3.22", "0.98", "0.12", "1.01", "+1 Lap", "+1 Lap",
-	}
 
-	gapToLeaders := []string{
-		"----", "0.23", "1.85", "2.04", "3.22", "4.98", "5.12", "6.01", "26.79", "1.23.54",
-	}
+	intervals := snapshot.Intervals
+	// intervals := []string{
+	// 	"----", "0.23", "0.85", "1.04", "3.22", "0.98", "0.12", "1.01", "+1 Lap", "+1 Lap",
+	// }
+
+	gapToLeaders := snapshot.GapsToLeaders
+	// gapToLeaders := []string{
+	// 	"----", "0.23", "1.85", "2.04", "3.22", "4.98", "5.12", "6.01", "26.79", "1.23.54",
+	// }
 
 	lastLap := snapshot.LastLap
 
@@ -156,3 +162,4 @@ func (m Model) View() tea.View {
 	v.AltScreen = true
 	return v
 }
+

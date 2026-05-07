@@ -4,6 +4,9 @@ import (
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
+var historyMaxLength = 180
+var raceControlMaxLength = 6
+
 type Store struct {
 	history      []model.Snapshot
 	Drivers      map[uint]*Driver // mapped to DriverNumber
@@ -22,8 +25,31 @@ type Driver struct {
 	Position         uint
 	StartingPosition uint
 	IsOut            bool
-	Interval         float32
-	ToLeader         float32
+	Interval         string
+	ToLeader         string
 	LastLap          float64
 	Stint            *model.Stint
+}
+
+func (s *Store) updateHistory(h *model.Snapshot) {
+	s.history = appendCapped(s.history, *h, historyMaxLength)
+}
+
+func (s *Store) updateRaceControl(rc *model.RaceControl) {
+	s.RaceControl = appendCapped(s.RaceControl, *rc, raceControlMaxLength)
+}
+
+func (s *Store) updateInterval(i *model.Interval) {
+	driver := s.Drivers[i.DriverNumber]
+	driver.Interval = string(i.Interval)
+	driver.ToLeader = string(i.GapToLeader)
+	// s.Drivers[i.DriverNumber] = driver
+}
+
+func appendCapped[T any](s []T, val T, max int) []T {
+	s = append(s, val)
+	if len(s) > max {
+		s = s[1:]
+	}
+	return s
 }

@@ -3,6 +3,9 @@ package datasource
 import (
 	"context"
 	"fmt"
+	"log"
+	"strings"
+	"time"
 
 	"github.com/nstandage/f1-go-cli-app/model"
 	"github.com/nstandage/f1-go-cli-app/service"
@@ -95,27 +98,39 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
 	}
 
+	startTime := hs.getStartTime(raceControls)
+	intervals, err := hs.getIntervals(ctx, rl, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - intervals failed %w", err)
+	}
+
 	hs.raceData.Meeting = &meetings[0]
 	hs.raceData.Session = raceSession
 	hs.raceData.TotalLaps = getLapCount(raceControls)
 	hs.raceData.StartingGrid = grid
 	hs.raceData.Drivers = drivers
+	hs.raceData.SessionStart = startTime
 	for _, rc := range raceControls {
 		hs.eventData.EventModels = append(hs.eventData.EventModels, &rc)
 	}
+
+	for _, i := range intervals {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &i)
+	}
+
 	return nil
 }
 
 func (hs *HistoricalSource) Start() (*model.RaceData, <-chan *model.Event) {
 	replayEngine := ReplayEngine{EventData: hs.eventData}
 	c := make(chan *model.Event)
-	go replayEngine.Start(c)
+	go replayEngine.Start(c, hs.raceData.SessionStart)
 	return hs.raceData, c
 }
 
 func getLapCount(rcs []model.RaceControl) uint {
 	for _, rc := range rcs {
-		if rc.Flag == "CHEQUERED" {
+		if strings.ToUpper(rc.Flag) == "CHEQUERED" {
 			return rc.LapNumber
 		}
 	}
@@ -172,6 +187,17 @@ func (hs *HistoricalSource) getRaceControls(ctx context.Context, rl *RateLimiter
 	return hs.service.FetchRaceControls(ctx, sessionKey)
 }
 
+func (hs *HistoricalSource) getStartTime(rcs []model.RaceControl) time.Time {
+	for _, rc := range rcs {
+		lowerMsg := strings.ToLower(rc.Message)
+		if strings.Contains(lowerMsg, "session start") {
+			log.Printf("getStartTime: %v", rc.DateStart)
+			return rc.DateStart
+		}
+	}
+	panic("getStartTime failed to find start")
+}
+
 // API requires a Qualifying session_key
 func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.StartingGrid, error) {
 	rl.Wait()
@@ -181,4 +207,9 @@ func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *RateLimiter
 func (hs *HistoricalSource) getDrivers(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Driver, error) {
 	rl.Wait()
 	return hs.service.FetchDrivers(ctx, sessionKey)
+}
+
+func (hs *HistoricalSource) getIntervals(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Interval, error) {
+	rl.Wait()
+	return hs.service.FetchIntervals(ctx, sessionKey)
 }

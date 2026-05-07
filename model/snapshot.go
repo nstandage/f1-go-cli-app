@@ -9,6 +9,8 @@ type Snapshot struct {
 	RaceControlMsgs []string
 	DriverNames     []string
 	LastLap         []string
+	Intervals       []string
+	GapsToLeaders   []string
 }
 
 type SessionBarSnapShot struct {
