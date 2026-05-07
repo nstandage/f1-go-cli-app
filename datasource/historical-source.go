@@ -11,8 +11,10 @@ import (
 	"github.com/nstandage/f1-go-cli-app/service"
 )
 
-type SessionType string
-type SessionName string
+type (
+	SessionType string
+	SessionName string
+)
 
 const (
 	FPType         SessionType = "Practice"
@@ -98,6 +100,11 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
 	}
 
+	positions, err := hs.getPositions(ctx, rl, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - positions failed %w", err)
+	}
+
 	startTime := hs.getStartTime(raceControls)
 	intervals, err := hs.getIntervals(ctx, rl, sessionKey)
 	if err != nil {
@@ -110,12 +117,17 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 	hs.raceData.StartingGrid = grid
 	hs.raceData.Drivers = drivers
 	hs.raceData.SessionStart = startTime
+
 	for _, rc := range raceControls {
 		hs.eventData.EventModels = append(hs.eventData.EventModels, &rc)
 	}
 
 	for _, i := range intervals {
 		hs.eventData.EventModels = append(hs.eventData.EventModels, &i)
+	}
+
+	for _, p := range positions {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &p)
 	}
 
 	return nil
@@ -207,6 +219,11 @@ func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *RateLimiter
 func (hs *HistoricalSource) getDrivers(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Driver, error) {
 	rl.Wait()
 	return hs.service.FetchDrivers(ctx, sessionKey)
+}
+
+func (hs *HistoricalSource) getPositions(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Position, error) {
+	rl.Wait()
+	return hs.service.FetchPositions(ctx, sessionKey)
 }
 
 func (hs *HistoricalSource) getIntervals(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Interval, error) {

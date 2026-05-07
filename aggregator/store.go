@@ -46,6 +46,11 @@ func (s *Store) updateInterval(i *model.Interval) {
 	// s.Drivers[i.DriverNumber] = driver
 }
 
+func (s *Store) updatePosition(p *model.Position) {
+	driver := s.Drivers[p.DriverNumber]
+	driver.Position = p.Position
+}
+
 func appendCapped[T any](s []T, val T, max int) []T {
 	s = append(s, val)
 	if len(s) > max {

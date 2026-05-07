@@ -88,7 +88,7 @@ func (s *OpenF1HTTP) FetchPits(ctx context.Context, sessionKey string) ([]model.
 }
 
 func (s *OpenF1HTTP) FetchPositions(ctx context.Context, sessionKey string) ([]model.Position, error) {
-	url := fmt.Sprintf("%v/pit?session_key=%v", baseUrl, sessionKey)
+	url := fmt.Sprintf("%v/position?session_key=%v", baseUrl, sessionKey)
 	positions, err := fetchData[[]model.Position](ctx, url)
 	if positions == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchPositions pos == nil %w", err)

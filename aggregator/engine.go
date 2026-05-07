@@ -95,7 +95,7 @@ func (e *Engine) updateMeeting(data *model.Meeting) {
 }
 
 func (e *Engine) updatePosition(data *model.Position) {
-
+	e.store.updatePosition(data)
 }
 
 func (e *Engine) updateSesion(data *model.Session) {

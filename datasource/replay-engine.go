@@ -3,7 +3,6 @@ package datasource
 import (
 	"sort"
 	"time"
-
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
@@ -22,10 +21,10 @@ func (eng *ReplayEngine) Start(out chan<- *model.Event, sessionStart time.Time) 
 			continue
 		}
 		if i > 0 { // prevents sleep for first event only. i-1 crashes if i = 0
-			// previousTime := laterOf(sessionStart, eng.EventData.EventModels[i-1].GetDateStart())
-			// duration := e.GetDateStart().Sub(previousTime)
-			// time.Sleep(duration)
-			time.Sleep(100 * time.Millisecond)
+			previousTime := laterOf(sessionStart, eng.EventData.EventModels[i-1].GetDateStart())
+			duration := e.GetDateStart().Sub(previousTime)
+			time.Sleep(duration)
+			// time.Sleep(100 * time.Millisecond)
 		}
 		out <- &model.Event{Model: e}
 	}

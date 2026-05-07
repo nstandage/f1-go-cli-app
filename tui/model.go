@@ -30,7 +30,6 @@ func tick() tea.Cmd {
 	})
 }
 
-
 func (m Model) Init() tea.Cmd {
 	return tick()
 }
@@ -162,4 +161,3 @@ func (m Model) View() tea.View {
 	v.AltScreen = true
 	return v
 }
-
