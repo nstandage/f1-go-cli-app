@@ -83,7 +83,15 @@ func (e *Engine) updateInterval(data *model.Interval) {
 }
 
 func (e *Engine) updateLap(data *model.Lap) {
-
+	if data.LapDuration <= 0 {
+		return
+	}
+	driver, ok := e.store.Drivers[data.DriverNumber]
+	if !ok {
+		return
+	}
+	driver.LastLap = data.LapDuration
+	driver.LastLapIsPitOut = data.IsPitOutLap
 }
 
 func (e *Engine) updateLocation(data *model.Location) {
@@ -117,11 +125,13 @@ func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
 		IsReplay:         e.store.IsReplay,
 		EventDate:        e.store.Session.DateStart,
 	}
+	lastLap, lastLapIsPitOut := e.getLastLap()
 	snapshot := model.Snapshot{
 		SessionBar:      &sessionBar,
 		RaceControlMsgs: e.getRaceControlMessages(),
 		DriverNames:     e.getDriverNames(),
-		LastLap:         e.getLastLap(),
+		LastLap:         lastLap,
+		LastLapIsPitOut: lastLapIsPitOut,
 		Intervals:       e.getIntervals(),
 		GapsToLeaders:   e.getGapToLeader(),
 	}
@@ -149,12 +159,14 @@ func (e *Engine) getDriverNames() []string {
 	return strs
 }
 
-func (e *Engine) getLastLap() []string {
+func (e *Engine) getLastLap() ([]string, []bool) {
 	strs := make([]string, len(e.store.Drivers))
+	isPitOut := make([]bool, len(e.store.Drivers))
 	for _, d := range e.store.Drivers {
 		strs[d.Position-1] = formatLapTime(d.LastLap)
+		isPitOut[d.Position-1] = d.LastLapIsPitOut
 	}
-	return strs
+	return strs, isPitOut
 }
 
 func formatLapTime(seconds float64) string {

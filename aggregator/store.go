@@ -27,8 +27,9 @@ type Driver struct {
 	IsOut            bool
 	Interval         string
 	ToLeader         string
-	LastLap          float64
-	Stint            *model.Stint
+	LastLap         float64
+	LastLapIsPitOut bool
+	Stint           *model.Stint
 }
 
 func (s *Store) updateHistory(h *model.Snapshot) {
@@ -43,7 +44,6 @@ func (s *Store) updateInterval(i *model.Interval) {
 	driver := s.Drivers[i.DriverNumber]
 	driver.Interval = string(i.Interval)
 	driver.ToLeader = string(i.GapToLeader)
-	// s.Drivers[i.DriverNumber] = driver
 }
 
 func (s *Store) updatePosition(p *model.Position) {

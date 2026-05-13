@@ -9,6 +9,7 @@ type Snapshot struct {
 	RaceControlMsgs []string
 	DriverNames     []string
 	LastLap         []string
+	LastLapIsPitOut []bool
 	Intervals       []string
 	GapsToLeaders   []string
 }

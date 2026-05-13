@@ -37,14 +37,19 @@ func DefaultColumn(i []string) string {
 		)
 }
 
-func LastLapColumn(i []string) string {
+func LastLapColumn(laps []string, isPitOut []bool) string {
+	styled := make([]string, len(laps))
+	for i, lap := range laps {
+		var c color.Color = title2Color
+		if i < len(isPitOut) && isPitOut[i] {
+			c = pitLaneSectorColor
+		}
+		styled[i] = defaultTextStyle(lap, c)
+	}
 	return lipgloss.NewStyle().
 		Margin(0, 0, 0, 3).
 		Render(
-			lipgloss.JoinVertical(
-				lipgloss.Left,
-				styleStrings(i, title2Color)...,
-			),
+			lipgloss.JoinVertical(lipgloss.Left, styled...),
 		)
 }
 

@@ -105,7 +105,7 @@ func (m Model) View() tea.View {
 	driverColumn := view.DefaultColumn(driverNames)
 	intervalColumn := view.DefaultColumn(intervals)
 	gapToLeaderColumn := view.DefaultColumn(gapToLeaders)
-	lastLapColumn := view.LastLapColumn(lastLap)
+	lastLapColumn := view.LastLapColumn(lastLap, snapshot.LastLapIsPitOut)
 	pitColumn := view.PitColumn(pits)
 	tiresColumn := view.TireColumn(tires)
 	tireAgeColumn := view.TireAgeColumn(tireAge)

@@ -111,6 +111,11 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - intervals failed %w", err)
 	}
 
+	laps, err := hs.getLaps(ctx, rl, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - laps failed %w", err)
+	}
+
 	hs.raceData.Meeting = &meetings[0]
 	hs.raceData.Session = raceSession
 	hs.raceData.TotalLaps = getLapCount(raceControls)
@@ -128,6 +133,10 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 
 	for _, p := range positions {
 		hs.eventData.EventModels = append(hs.eventData.EventModels, &p)
+	}
+
+	for _, l := range laps {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &l)
 	}
 
 	return nil
@@ -229,4 +238,9 @@ func (hs *HistoricalSource) getPositions(ctx context.Context, rl *RateLimiter, s
 func (hs *HistoricalSource) getIntervals(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Interval, error) {
 	rl.Wait()
 	return hs.service.FetchIntervals(ctx, sessionKey)
+}
+
+func (hs *HistoricalSource) getLaps(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Lap, error) {
+	rl.Wait()
+	return hs.service.FetchLaps(ctx, sessionKey)
 }
