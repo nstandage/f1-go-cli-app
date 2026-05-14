@@ -2,6 +2,7 @@ package tui
 
 import (
 	"log"
+	"strconv"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -78,17 +79,14 @@ func (m Model) View() tea.View {
 
 	lastLap := snapshot.LastLap
 
-	pits := []string{
-		"1", "1", "1", "1", "0", "0", "2", "1", "0", "4",
+	pits := make([]string, len(snapshot.PitCounts))
+	for i, count := range snapshot.PitCounts {
+		pits[i] = strconv.Itoa(count)
 	}
 
-	tires := []string{
-		"MEDIUM", "HARD", "SOFT", "MEDIUM", "MEDIUM", "SOFT", "SOFT", "INT", "WET", "SOFT",
-	}
+	tires := snapshot.TireCompounds
 
-	tireAge := []string{
-		"23", "22", "10", "17", "0", "1", "30", "29", "1", "2",
-	}
+	tireAge := snapshot.TireAges
 
 	raceControlMessages := snapshot.RaceControlMsgs
 
