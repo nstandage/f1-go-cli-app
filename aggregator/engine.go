@@ -250,7 +250,7 @@ func (e *Engine) getTireCompounds() []string {
 		if stint == nil {
 			compounds[d.Position-1] = "---"
 		} else {
-			compounds[d.Position-1] = stint.Compound
+			compounds[d.Position-1] = normalizeCompound(stint.Compound)
 		}
 	}
 	return compounds

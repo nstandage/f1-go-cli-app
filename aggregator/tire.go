@@ -22,3 +22,10 @@ func getActiveStint(stints []model.Stint, currentLap uint) *model.Stint {
 func tireAge(stint *model.Stint, currentLap uint) uint {
 	return stint.TyreAgeAtStart + (currentLap - stint.LapStart)
 }
+
+func normalizeCompound(compound string) string {
+	if compound == "INTERMEDIATE" {
+		return "INT"
+	}
+	return compound
+}
