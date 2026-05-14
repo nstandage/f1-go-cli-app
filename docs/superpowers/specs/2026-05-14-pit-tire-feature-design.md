@@ -26,24 +26,21 @@ Replace the hardcoded `pits`, `tires`, and `tireAge` placeholder slices in `tui/
 
 ## Changes
 
-### 1. `model/event.go`
-Add `GetDateStart()` for `Pit` so it satisfies `EventModel`.
-
-### 2. `datasource/historical-source.go`
+### 1. `datasource/historical-source.go`
 - Fetch stints via `service.FetchStint()`, store in `raceData.Stints`.
 - Fetch pits via `service.FetchPits()`, append each `Pit` to `eventData.EventModels` (replayed in timestamp order alongside intervals/laps/positions).
 
-### 3. `aggregator/store.go`
+### 2. `aggregator/store.go`
 - Add `Stints map[uint][]model.Stint` to `Store` (keyed by `DriverNumber`).
 - Add `PitCount uint` to `Driver`.
 
-### 4. `aggregator/engine.go`
+### 3. `aggregator/engine.go`
 - In `setUpInitialStore()`: populate `store.Stints` from `raceData.Stints`.
 - In `handle()`: add `case *model.Pit` → `store.Drivers[pit.DriverNumber].PitCount++`.
 - Add `getTireSnapshot()` helper: for each driver, find active stint, return compound and tire age slices.
 - In `GetSnapshot()`: add `PitCounts`, `TireCompounds`, `TireAges` fields populated from store.
 
-### 5. `model/snapshot.go`
+### 4. `model/snapshot.go`
 Add three fields to `Snapshot`:
 ```go
 PitCounts     []int
@@ -51,7 +48,7 @@ TireCompounds []string
 TireAges      []string
 ```
 
-### 6. `tui/model.go`
+### 5. `tui/model.go`
 Replace hardcoded `pits`, `tires`, `tireAge` slices with `snapshot.PitCounts` (converted to strings), `snapshot.TireCompounds`, and `snapshot.TireAges`.
 
 ## Edge Cases
