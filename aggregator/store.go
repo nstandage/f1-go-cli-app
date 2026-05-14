@@ -23,6 +23,7 @@ type Store struct {
 	Meeting              *model.Meeting
 	StartingGrid         []model.StartingGrid
 	FastestLap			 *FastestLap
+	Stints               map[uint][]model.Stint
 }
 
 type Driver struct {
@@ -36,6 +37,7 @@ type Driver struct {
 	LastLap          float64
 	LastLapIsPitOut  bool
 	Stint            *model.Stint
+	PitCount         uint
 }
 
 type FastestLap struct {
