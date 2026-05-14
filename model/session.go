@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 type Session struct {
 	CircuitKey       uint      `json:"circuit_key"`
@@ -17,4 +20,8 @@ type Session struct {
 	SessionName      string    `json:"session_name"`
 	SessionType      string    `json:"session_type"`
 	Year             uint      `json:"year"`
+}
+
+func (s *Session) GetSessionKey() string {
+	return strconv.FormatUint(uint64(s.SessionKey), 10)
 }

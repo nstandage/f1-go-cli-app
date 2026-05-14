@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -30,9 +31,6 @@ func tick() tea.Cmd {
 }
 
 func (m Model) Init() tea.Cmd {
-	m.offset = 0
-	m.isPaused = false
-	m.Window = Window{}
 	return tick()
 }
 
@@ -44,6 +42,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
+			log.Println("-----------------------")
 			return m, tea.Quit
 		}
 	case TickMsg:
@@ -56,7 +55,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Model) View() tea.View {
 	snapshot := m.Engine.GetSnapshot(0)
-	sessionBar := view.SessionBar(&snapshot.SessionBar)
+	sessionBar := view.SessionBar(snapshot.SessionBar)
 	legendBar := view.LegendBar()
 	positionColumn := view.PositionsColumn()
 	lapSectors := [][]int{
@@ -71,21 +70,13 @@ func (m Model) View() tea.View {
 	}
 	topBar := view.Topbar(lapSectorCount)
 
-	driverNames := []string{
-		"VER", "NOR", "LEC", "PIA", "PER", "HAM", "ANT", "RUS", "HAD", "SAI",
-	}
+	drivers := snapshot.Drivers
 
-	intervals := []string{
-		"----", "0.23", "0.85", "1.04", "3.22", "0.98", "0.12", "1.01", "+1 Lap", "+1 Lap",
-	}
+	intervals := snapshot.Intervals
 
-	gapToLeaders := []string{
-		"----", "0.23", "1.85", "2.04", "3.22", "4.98", "5.12", "6.01", "26.79", "1.23.54",
-	}
+	gapToLeaders := snapshot.GapsToLeaders
 
-	lastLap := []string{
-		"1.29.54", "1.29.64", "1.30.85", "1.30.04", "1.30.22", "1.31.98", "1.35.12", "1.36.01", "1.46.79", "1.23.54",
-	}
+	lastLap := snapshot.LastLap
 
 	pits := []string{
 		"1", "1", "1", "1", "0", "0", "2", "1", "0", "4",
@@ -105,10 +96,10 @@ func (m Model) View() tea.View {
 		3.0, 3.2, 3.8, 2.99, 3.12,
 	}
 
-	driverColumn := view.DefaultColumn(driverNames)
+	driverColumn := view.DriverColumn(drivers)
 	intervalColumn := view.DefaultColumn(intervals)
 	gapToLeaderColumn := view.DefaultColumn(gapToLeaders)
-	lastLapColumn := view.LastLapColumn(lastLap)
+	lastLapColumn := view.LastLapColumn(lastLap, snapshot.LastLapIsPitOut)
 	pitColumn := view.PitColumn(pits)
 	tiresColumn := view.TireColumn(tires)
 	tireAgeColumn := view.TireAgeColumn(tireAge)

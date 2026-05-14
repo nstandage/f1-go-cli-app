@@ -1,6 +1,8 @@
-package service
+package datasource
 
-import "time"
+import (
+	"time"
+)
 
 type RateLimiter struct {
 	ticker *time.Ticker

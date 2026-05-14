@@ -27,7 +27,7 @@ var (
 
 var (
 	title1Color    = lipgloss.Color("#29CFE6")
-	title2Color    = lipgloss.BrightWhite
+	title2Color    = lipgloss.Color("#c0caf5")
 	title3Color    = lipgloss.Color("#C78ED0")
 	titleDarkColor = lipgloss.Color("#666666")
 	borderColor    = lipgloss.Color("#3C3C3C")
