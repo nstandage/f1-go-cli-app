@@ -15,7 +15,6 @@ type Store struct {
 	history              []model.Snapshot
 	Drivers              map[uint]*Driver // mapped to DriverNumber
 	RaceControl          []model.RaceControl
-	Pitstops             []model.Pit
 	TotalLaps            uint
 	CurrentLap           uint
 	IsReplay             bool
@@ -36,7 +35,6 @@ type Driver struct {
 	ToLeader         string
 	LastLap          float64
 	LastLapIsPitOut  bool
-	Stint            *model.Stint
 	PitCount         uint
 }
 

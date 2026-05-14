@@ -2,7 +2,6 @@ package tui
 
 import (
 	"log"
-	"strconv"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -79,10 +78,7 @@ func (m Model) View() tea.View {
 
 	lastLap := snapshot.LastLap
 
-	pits := make([]string, len(snapshot.PitCounts))
-	for i, count := range snapshot.PitCounts {
-		pits[i] = strconv.Itoa(count)
-	}
+	pits := snapshot.PitCounts
 
 	tires := snapshot.TireCompounds
 

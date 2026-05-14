@@ -75,3 +75,26 @@ func TestTireAge_WithPreUsedTyres(t *testing.T) {
 		t.Errorf("expected 10, got %v", age)
 	}
 }
+
+func TestTireAge_AtLapStart(t *testing.T) {
+	stint := &model.Stint{LapStart: 10, TyreAgeAtStart: 3}
+	age := tireAge(stint, 10)
+	if age != 3 {
+		t.Errorf("expected 3 (TyreAgeAtStart only), got %v", age)
+	}
+}
+
+func TestGetActiveStint_UnorderedStints(t *testing.T) {
+	// stints provided in reverse order — implementation must still find correct active stint
+	stints := []model.Stint{
+		{LapStart: 21, LapEnd: 45, Compound: "MEDIUM", StintNumber: 2},
+		{LapStart: 1, LapEnd: 20, Compound: "SOFT", StintNumber: 1},
+	}
+	result := getActiveStint(stints, 15)
+	if result == nil {
+		t.Fatal("expected stint, got nil")
+	}
+	if result.Compound != "SOFT" {
+		t.Errorf("expected SOFT (first stint), got %v", result.Compound)
+	}
+}

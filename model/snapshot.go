@@ -12,7 +12,7 @@ type Snapshot struct {
 	LastLapIsPitOut []bool
 	Intervals       []string
 	GapsToLeaders   []string
-	PitCounts       []int
+	PitCounts       []string
 	TireCompounds   []string
 	TireAges        []string
 }

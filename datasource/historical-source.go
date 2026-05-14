@@ -260,7 +260,7 @@ func (hs *HistoricalSource) getLaps(ctx context.Context, rl *RateLimiter, sessio
 
 func (hs *HistoricalSource) getStints(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Stint, error) {
 	rl.Wait()
-	return hs.service.FetchStint(ctx, sessionKey)
+	return hs.service.FetchStints(ctx, sessionKey)
 }
 
 func (hs *HistoricalSource) getPits(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Pit, error) {

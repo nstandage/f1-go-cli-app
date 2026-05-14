@@ -235,10 +235,10 @@ func (e *Engine) getGapToLeader() []string {
 	return strs
 }
 
-func (e *Engine) getPitCounts() []int {
-	counts := make([]int, len(e.store.Drivers))
+func (e *Engine) getPitCounts() []string {
+	counts := make([]string, len(e.store.Drivers))
 	for _, d := range e.store.Drivers {
-		counts[d.Position-1] = int(d.PitCount)
+		counts[d.Position-1] = strconv.Itoa(int(d.PitCount))
 	}
 	return counts
 }
