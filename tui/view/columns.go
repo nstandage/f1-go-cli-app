@@ -3,8 +3,8 @@ package view
 import (
 	"fmt"
 	"image/color"
-
 	"charm.land/lipgloss/v2"
+	"github.com/nstandage/f1-go-cli-app/model"
 )
 
 func PositionsColumn() string {
@@ -36,6 +36,27 @@ func DefaultColumn(i []string) string {
 			),
 		)
 }
+
+func DriverColumn(drivers []model.DriverSnapshot) string {
+	styledDrivers := make([]string, len(drivers))
+	for i, d := range drivers {
+		c := title2Color
+		if d.IsFastestLap {
+			c = bestOverallSectorColor
+		}
+		styledDrivers[i] = defaultTextStyle(d.Name, c)
+	}
+
+	return lipgloss.NewStyle().
+		Margin(0, 0, 0, 6).
+		Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				styledDrivers...
+			),
+		)
+}
+
 
 func LastLapColumn(laps []string, isPitOut []bool) string {
 	styled := make([]string, len(laps))

@@ -7,7 +7,7 @@ import (
 type Snapshot struct {
 	SessionBar      *SessionBarSnapShot
 	RaceControlMsgs []string
-	DriverNames     []string
+	Drivers     []DriverSnapshot
 	LastLap         []string
 	LastLapIsPitOut []bool
 	Intervals       []string
@@ -17,11 +17,21 @@ type Snapshot struct {
 type SessionBarSnapShot struct {
 	EventName        string
 	EventType        string
+	FastestLap		 *FastestLapSnapshot
 	CurrentLap       uint
 	TotalLaps        uint
-	FastestLapTime   time.Time
-	FastestLapDriver string
-	FastestLapNumber uint
 	IsReplay         bool
 	EventDate        time.Time
+}
+
+type FastestLapSnapshot struct {
+	LapTime   string
+	Driver string
+	LapNumber string
+}
+
+
+type DriverSnapshot struct {
+	Name string
+	IsFastestLap bool
 }

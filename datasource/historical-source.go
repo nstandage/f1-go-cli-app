@@ -3,7 +3,6 @@ package datasource
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -212,7 +211,6 @@ func (hs *HistoricalSource) getStartTime(rcs []model.RaceControl) time.Time {
 	for _, rc := range rcs {
 		lowerMsg := strings.ToLower(rc.Message)
 		if strings.Contains(lowerMsg, "session start") {
-			log.Printf("getStartTime: %v", rc.DateStart)
 			return rc.DateStart
 		}
 	}

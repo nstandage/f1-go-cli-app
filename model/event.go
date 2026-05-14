@@ -15,7 +15,7 @@ type EventModel interface {
 func (i *Interval) GetDateStart() time.Time { return i.DateStart }
 
 func (l *Lap) GetDateStart() time.Time {
-	return l.DateStart.Add(time.Duration(l.LapDuration * float64(time.Second)))
+	return l.DateStart
 }
 
 func (l *Location) GetDateStart() time.Time { return l.DateStart }

@@ -70,17 +70,11 @@ func (m Model) View() tea.View {
 	}
 	topBar := view.Topbar(lapSectorCount)
 
-	driverNames := snapshot.DriverNames
+	drivers := snapshot.Drivers
 
 	intervals := snapshot.Intervals
-	// intervals := []string{
-	// 	"----", "0.23", "0.85", "1.04", "3.22", "0.98", "0.12", "1.01", "+1 Lap", "+1 Lap",
-	// }
 
 	gapToLeaders := snapshot.GapsToLeaders
-	// gapToLeaders := []string{
-	// 	"----", "0.23", "1.85", "2.04", "3.22", "4.98", "5.12", "6.01", "26.79", "1.23.54",
-	// }
 
 	lastLap := snapshot.LastLap
 
@@ -102,7 +96,7 @@ func (m Model) View() tea.View {
 		3.0, 3.2, 3.8, 2.99, 3.12,
 	}
 
-	driverColumn := view.DefaultColumn(driverNames)
+	driverColumn := view.DriverColumn(drivers)
 	intervalColumn := view.DefaultColumn(intervals)
 	gapToLeaderColumn := view.DefaultColumn(gapToLeaders)
 	lastLapColumn := view.LastLapColumn(lastLap, snapshot.LastLapIsPitOut)
