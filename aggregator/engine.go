@@ -33,6 +33,10 @@ func (e *Engine) setUpInitialStore(rd *model.RaceData) {
 	e.store.StartingGrid = rd.StartingGrid
 	e.store.IsReplay = e.datasource.IsReplay()
 	e.store.Drivers = convertDrivers(rd.Drivers)
+	e.store.Stints = make(map[uint][]model.Stint)
+	for _, s := range rd.Stints {
+		e.store.Stints[s.DriverNumber] = append(e.store.Stints[s.DriverNumber], s)
+	}
 
 	for _, sg := range e.store.StartingGrid {
 		driver, ok := e.store.Drivers[sg.DriverNumber]
@@ -76,6 +80,8 @@ func (e *Engine) handle(event *model.Event) {
 		e.updatePosition(m)
 	case *model.RaceControl:
 		e.store.updateRaceControl(m)
+	case *model.Pit:
+		e.updatePit(m)
 	}
 }
 
@@ -95,6 +101,12 @@ func (e *Engine) updateMeeting(data *model.Meeting) {
 
 func (e *Engine) updatePosition(data *model.Position) {
 	e.store.updatePosition(data)
+}
+
+func (e *Engine) updatePit(data *model.Pit) {
+	if driver, ok := e.store.Drivers[data.DriverNumber]; ok {
+		driver.PitCount++
+	}
 }
 
 func (e *Engine) updateSesion(data *model.Session) {
@@ -124,6 +136,9 @@ func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
 		LastLapIsPitOut: lastLapIsPitOut,
 		Intervals:       e.getIntervals(),
 		GapsToLeaders:   e.getGapToLeader(),
+		PitCounts:       e.getPitCounts(),
+		TireCompounds:   e.getTireCompounds(),
+		TireAges:        e.getTireAges(),
 	}
 
 	e.store.updateHistory(&snapshot)
@@ -218,4 +233,38 @@ func (e *Engine) getGapToLeader() []string {
 		strs[d.Position-1] = getTimingText(d.ToLeader)
 	}
 	return strs
+}
+
+func (e *Engine) getPitCounts() []int {
+	counts := make([]int, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
+		counts[d.Position-1] = int(d.PitCount)
+	}
+	return counts
+}
+
+func (e *Engine) getTireCompounds() []string {
+	compounds := make([]string, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
+		stint := getActiveStint(e.store.Stints[d.Number], e.store.CurrentLap)
+		if stint == nil {
+			compounds[d.Position-1] = "---"
+		} else {
+			compounds[d.Position-1] = stint.Compound
+		}
+	}
+	return compounds
+}
+
+func (e *Engine) getTireAges() []string {
+	ages := make([]string, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
+		stint := getActiveStint(e.store.Stints[d.Number], e.store.CurrentLap)
+		if stint == nil {
+			ages[d.Position-1] = "--"
+		} else {
+			ages[d.Position-1] = strconv.FormatUint(uint64(tireAge(stint, e.store.CurrentLap)), 10)
+		}
+	}
+	return ages
 }
