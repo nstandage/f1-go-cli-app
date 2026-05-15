@@ -23,6 +23,7 @@ type Store struct {
 	StartingGrid []model.StartingGrid
 	FastestLap   *FastestLap
 	Stints       map[uint][]model.Stint
+	RecentPits   []model.PitStopEntry
 }
 
 type Driver struct {
@@ -103,8 +104,18 @@ func (s *Store) updatePosition(p *model.Position) {
 }
 
 func (s *Store) updatePit(p *model.Pit) {
-	if driver, ok := s.Drivers[p.DriverNumber]; ok {
-		driver.PitCount++
+	driver, ok := s.Drivers[p.DriverNumber]
+	if !ok {
+		return
+	}
+	driver.PitCount++
+	entry := model.PitStopEntry{
+		DriverAcronym: driver.Info.NameAcronym,
+		StopDuration:  p.StopDuration,
+	}
+	s.RecentPits = append([]model.PitStopEntry{entry}, s.RecentPits...)
+	if len(s.RecentPits) > 8 {
+		s.RecentPits = s.RecentPits[:8]
 	}
 }
 
