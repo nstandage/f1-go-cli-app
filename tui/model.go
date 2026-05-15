@@ -86,10 +86,6 @@ func (m Model) View() tea.View {
 
 	raceControlMessages := snapshot.RaceControlMsgs
 
-	pitStops := []float64{
-		3.0, 3.2, 3.8, 2.99, 3.12,
-	}
-
 	driverColumn := view.DriverColumn(drivers)
 	intervalColumn := view.DefaultColumn(intervals)
 	gapToLeaderColumn := view.DefaultColumn(gapToLeaders)
@@ -99,7 +95,7 @@ func (m Model) View() tea.View {
 	tireAgeColumn := view.TireAgeColumn(tireAge)
 	laps := view.Laps(lapSectors)
 	raceControl := view.RaceControl(raceControlMessages)
-	pitStopView := view.PitStops(pitStops)
+	pitStopView := view.PitStops(snapshot.RecentPitStops)
 
 	driverView := lipgloss.JoinHorizontal(
 		lipgloss.Top,

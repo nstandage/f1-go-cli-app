@@ -3,17 +3,17 @@ package view
 import (
 	"fmt"
 	"image/color"
+
+	"github.com/nstandage/f1-go-cli-app/model"
 )
 
-func PitStops(stops []float64) string {
+func PitStops(stops []model.PitStopEntry) string {
 	str := ""
-
 	for _, stop := range stops {
-		c := getPitColor(stop)
-		s := fmt.Sprintf("%.2f", stop)
-		str = str + defaultTextStyle(s, c) + "\n"
+		c := getPitColor(stop.StopDuration)
+		row := fmt.Sprintf("%-4s %5.2f", stop.DriverAcronym, stop.StopDuration)
+		str = str + defaultTextStyle(row, c) + "\n"
 	}
-
 	return defaultBorderStyle().Width(22).Height(14).Render(str)
 }
 
@@ -25,6 +25,5 @@ func getPitColor(stop float64) color.Color {
 		return pitStopAverageColor
 	default:
 		return pitStopSlowColor
-
 	}
 }
