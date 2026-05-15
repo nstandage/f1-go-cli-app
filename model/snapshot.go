@@ -15,6 +15,12 @@ type Snapshot struct {
 	PitCounts       []string
 	TireCompounds   []string
 	TireAges        []string
+	RecentPitStops  []PitStopEntry
+}
+
+type PitStopEntry struct {
+	DriverAcronym string
+	StopDuration  float64
 }
 
 type SessionBarSnapShot struct {
