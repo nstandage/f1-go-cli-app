@@ -115,12 +115,23 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - laps failed %w", err)
 	}
 
+	stints, err := hs.getStints(ctx, rl, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - stints failed %w", err)
+	}
+
+	pits, err := hs.getPits(ctx, rl, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - pits failed %w", err)
+	}
+
 	hs.raceData.Meeting = &meetings[0]
 	hs.raceData.Session = raceSession
 	hs.raceData.TotalLaps = getLapCount(raceControls)
 	hs.raceData.StartingGrid = grid
 	hs.raceData.Drivers = drivers
 	hs.raceData.SessionStart = startTime
+	hs.raceData.Stints = stints
 
 	for _, rc := range raceControls {
 		hs.eventData.EventModels = append(hs.eventData.EventModels, &rc)
@@ -136,6 +147,10 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 
 	for _, l := range laps {
 		hs.eventData.EventModels = append(hs.eventData.EventModels, &l)
+	}
+
+	for _, pit := range pits {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &pit)
 	}
 
 	return nil
@@ -241,4 +256,14 @@ func (hs *HistoricalSource) getIntervals(ctx context.Context, rl *RateLimiter, s
 func (hs *HistoricalSource) getLaps(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Lap, error) {
 	rl.Wait()
 	return hs.service.FetchLaps(ctx, sessionKey)
+}
+
+func (hs *HistoricalSource) getStints(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Stint, error) {
+	rl.Wait()
+	return hs.service.FetchStints(ctx, sessionKey)
+}
+
+func (hs *HistoricalSource) getPits(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Pit, error) {
+	rl.Wait()
+	return hs.service.FetchPits(ctx, sessionKey)
 }

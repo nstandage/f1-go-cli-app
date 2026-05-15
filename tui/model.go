@@ -78,17 +78,11 @@ func (m Model) View() tea.View {
 
 	lastLap := snapshot.LastLap
 
-	pits := []string{
-		"1", "1", "1", "1", "0", "0", "2", "1", "0", "4",
-	}
+	pits := snapshot.PitCounts
 
-	tires := []string{
-		"MEDIUM", "HARD", "SOFT", "MEDIUM", "MEDIUM", "SOFT", "SOFT", "INT", "WET", "SOFT",
-	}
+	tires := snapshot.TireCompounds
 
-	tireAge := []string{
-		"23", "22", "10", "17", "0", "1", "30", "29", "1", "2",
-	}
+	tireAge := snapshot.TireAges
 
 	raceControlMessages := snapshot.RaceControlMsgs
 

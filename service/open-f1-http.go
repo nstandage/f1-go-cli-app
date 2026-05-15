@@ -105,11 +105,11 @@ func (s *OpenF1HTTP) FetchRaceControls(ctx context.Context, sessionKey string) (
 	return *raceControl, err
 }
 
-func (s *OpenF1HTTP) FetchStint(ctx context.Context, sessionKey string) ([]model.Stint, error) {
+func (s *OpenF1HTTP) FetchStints(ctx context.Context, sessionKey string) ([]model.Stint, error) {
 	url := fmt.Sprintf("%v/stints?session_key=%v", baseUrl, sessionKey)
 	stints, err := fetchData[[]model.Stint](ctx, url)
 	if stints == nil {
-		return nil, fmt.Errorf("OpenF1HTTP.FetchStint stints == nil %w", err)
+		return nil, fmt.Errorf("OpenF1HTTP.FetchStints stints == nil %w", err)
 	}
 	return *stints, err
 }

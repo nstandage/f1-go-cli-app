@@ -7,11 +7,14 @@ import (
 type Snapshot struct {
 	SessionBar      *SessionBarSnapShot
 	RaceControlMsgs []string
-	Drivers     []DriverSnapshot
+	Drivers         []DriverSnapshot
 	LastLap         []string
 	LastLapIsPitOut []bool
 	Intervals       []string
 	GapsToLeaders   []string
+	PitCounts       []string
+	TireCompounds   []string
+	TireAges        []string
 }
 
 type SessionBarSnapShot struct {

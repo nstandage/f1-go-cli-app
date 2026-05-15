@@ -12,17 +12,17 @@ var (
 )
 
 type Store struct {
-	history              []model.Snapshot
-	Drivers              map[uint]*Driver // mapped to DriverNumber
-	RaceControl          []model.RaceControl
-	Pitstops             []model.Pit
-	TotalLaps            uint
-	CurrentLap           uint
-	IsReplay             bool
-	Session              *model.Session
-	Meeting              *model.Meeting
-	StartingGrid         []model.StartingGrid
-	FastestLap			 *FastestLap
+	history      []model.Snapshot
+	Drivers      map[uint]*Driver // mapped to DriverNumber
+	RaceControl  []model.RaceControl
+	TotalLaps    uint
+	CurrentLap   uint
+	IsReplay     bool
+	Session      *model.Session
+	Meeting      *model.Meeting
+	StartingGrid []model.StartingGrid
+	FastestLap   *FastestLap
+	Stints       map[uint][]model.Stint
 }
 
 type Driver struct {
@@ -35,13 +35,15 @@ type Driver struct {
 	ToLeader         string
 	LastLap          float64
 	LastLapIsPitOut  bool
-	Stint            *model.Stint
+	LapsOnTire       uint
+	PitCount         uint
+	CurrentLap       uint
 }
 
 type FastestLap struct {
-	LapTime           float64
-	DriverNumber 		 uint
-	LapNumber     uint
+	LapTime      float64
+	DriverNumber uint
+	LapNumber    uint
 }
 
 func (s *Store) updateHistory(h *model.Snapshot) {
@@ -66,6 +68,11 @@ func (s *Store) updateLap(data *model.Lap) {
 	if data.LapNumber > s.CurrentLap {
 		s.CurrentLap = data.LapNumber
 	}
+	if driver, ok := s.Drivers[data.DriverNumber]; ok {
+		if data.LapNumber > driver.CurrentLap {
+			driver.CurrentLap = data.LapNumber
+		}
+	}
 	go s.sleepForLapDuration(data)
 }
 
@@ -80,19 +87,25 @@ func (s *Store) sleepForLapDuration(data *model.Lap) {
 
 	driver.LastLap = data.LapDuration
 	driver.LastLapIsPitOut = data.IsPitOutLap
+	driver.LapsOnTire++
 	if s.FastestLap == nil || data.LapDuration < s.FastestLap.LapTime {
 		s.FastestLap = &FastestLap{
-			LapTime: data.LapDuration,
+			LapTime:      data.LapDuration,
 			DriverNumber: data.DriverNumber,
-			LapNumber: data.LapNumber,
+			LapNumber:    data.LapNumber,
 		}
-
 	}
 }
 
 func (s *Store) updatePosition(p *model.Position) {
 	driver := s.Drivers[p.DriverNumber]
 	driver.Position = p.Position
+}
+
+func (s *Store) updatePit(p *model.Pit) {
+	if driver, ok := s.Drivers[p.DriverNumber]; ok {
+		driver.PitCount++
+	}
 }
 
 func appendCapped[T any](s []T, val T, max int) []T {
