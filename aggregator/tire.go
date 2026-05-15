@@ -24,8 +24,13 @@ func tireAge(stint *model.Stint, currentLap uint) uint {
 }
 
 func normalizeCompound(compound string) string {
-	if compound == "INTERMEDIATE" {
+
+	switch compound {
+		case "MEDIUM": 
+		return "MED"
+	case "INTERMEDIATE":
 		return "INT"
+	default:
+		return compound
 	}
-	return compound
 }

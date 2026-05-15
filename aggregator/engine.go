@@ -44,6 +44,7 @@ func (e *Engine) setUpInitialStore(rd *model.RaceData) {
 			driver.StartingPosition = sg.Position
 			driver.Position = sg.Position
 			driver.LastLap = sg.LapDuration
+			driver.LapsOnTire = 0
 		}
 	}
 }
@@ -104,9 +105,7 @@ func (e *Engine) updatePosition(data *model.Position) {
 }
 
 func (e *Engine) updatePit(data *model.Pit) {
-	if driver, ok := e.store.Drivers[data.DriverNumber]; ok {
-		driver.PitCount++
-	}
+	e.store.updatePit(data)
 }
 
 func (e *Engine) updateSesion(data *model.Session) {
@@ -246,7 +245,7 @@ func (e *Engine) getPitCounts() []string {
 func (e *Engine) getTireCompounds() []string {
 	compounds := make([]string, len(e.store.Drivers))
 	for _, d := range e.store.Drivers {
-		stint := getActiveStint(e.store.Stints[d.Number], e.store.CurrentLap)
+		stint := getActiveStint(e.store.Stints[d.Number], d.CurrentLap)
 		if stint == nil {
 			compounds[d.Position-1] = "---"
 		} else {
@@ -259,11 +258,11 @@ func (e *Engine) getTireCompounds() []string {
 func (e *Engine) getTireAges() []string {
 	ages := make([]string, len(e.store.Drivers))
 	for _, d := range e.store.Drivers {
-		stint := getActiveStint(e.store.Stints[d.Number], e.store.CurrentLap)
+		stint := getActiveStint(e.store.Stints[d.Number], d.CurrentLap)
 		if stint == nil {
 			ages[d.Position-1] = "--"
 		} else {
-			ages[d.Position-1] = strconv.FormatUint(uint64(tireAge(stint, e.store.CurrentLap)), 10)
+			ages[d.Position-1] = strconv.FormatUint(uint64(tireAge(stint, d.CurrentLap)), 10)
 		}
 	}
 	return ages
