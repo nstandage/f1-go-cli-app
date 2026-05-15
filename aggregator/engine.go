@@ -138,6 +138,7 @@ func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
 		PitCounts:       e.getPitCounts(),
 		TireCompounds:   e.getTireCompounds(),
 		TireAges:        e.getTireAges(),
+		RecentPitStops:  e.store.RecentPits,
 	}
 
 	e.store.updateHistory(&snapshot)
