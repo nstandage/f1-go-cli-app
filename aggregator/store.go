@@ -9,6 +9,7 @@ import (
 var (
 	historyMaxLength     = 180
 	raceControlMaxLength = 6
+	recentPitsMaxLength  = 8
 )
 
 type Store struct {
@@ -114,8 +115,8 @@ func (s *Store) updatePit(p *model.Pit) {
 		StopDuration:  p.StopDuration,
 	}
 	s.RecentPits = append([]model.PitStopEntry{entry}, s.RecentPits...)
-	if len(s.RecentPits) > 8 {
-		s.RecentPits = s.RecentPits[:8]
+	if len(s.RecentPits) > recentPitsMaxLength {
+		s.RecentPits = s.RecentPits[:recentPitsMaxLength]
 	}
 }
 
