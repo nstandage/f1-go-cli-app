@@ -35,9 +35,10 @@ func topTitle(title string, margin int) string {
 }
 
 func sectorTitle(sector string, miniSectors int) string {
-	// This is ugly. minisectors - number of characters that are in the first Sprintf. times 2 because that's how many characters per mini sector I'm showing. (lap.go)
-	title := fmt.Sprintf("--%v", sector) + strings.Repeat("-", (miniSectors-2)*2) //
-	// title := "----------"
+	if miniSectors < 2 {
+		miniSectors = 2
+	}
+	title := fmt.Sprintf("--%v", sector) + strings.Repeat("-", (miniSectors-2)*2)
 	return lipgloss.
 		NewStyle().
 		Margin(0, 1).
