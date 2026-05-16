@@ -139,6 +139,8 @@ func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
 		TireCompounds:   e.getTireCompounds(),
 		TireAges:        e.getTireAges(),
 		RecentPitStops:  e.store.RecentPits,
+		Sectors:         e.getSectors(),
+		SectorCounts:    e.store.SectorCounts,
 	}
 
 	e.store.updateHistory(&snapshot)
@@ -267,4 +269,21 @@ func (e *Engine) getTireAges() []string {
 		}
 	}
 	return ages
+}
+
+func (e *Engine) getSectors() [][][]uint {
+	result := make([][][]uint, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
+		if d.Position == 0 {
+			continue
+		}
+		sectors := make([][]uint, 3)
+		for i := range 3 {
+			seg := make([]uint, len(d.Sectors[i]))
+			copy(seg, d.Sectors[i])
+			sectors[i] = seg
+		}
+		result[d.Position-1] = sectors
+	}
+	return result
 }
