@@ -115,6 +115,11 @@ func (s *Store) animateSectors(ctx context.Context, driver *Driver, data *model.
 				return
 			default:
 			}
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
 			driver.Sectors[i] = append(driver.Sectors[i], seg)
 		}
 	}
