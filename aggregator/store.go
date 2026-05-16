@@ -1,6 +1,7 @@
 package aggregator
 
 import (
+	"context"
 	"time"
 
 	"github.com/nstandage/f1-go-cli-app/model"
@@ -25,6 +26,7 @@ type Store struct {
 	FastestLap   *FastestLap
 	Stints       map[uint][]model.Stint
 	RecentPits   []model.PitStopEntry
+	SectorCounts [3]int
 }
 
 type Driver struct {
@@ -40,6 +42,8 @@ type Driver struct {
 	LapsOnTire       uint
 	PitCount         uint
 	CurrentLap       uint
+	Sectors          [3][]uint
+	cancelSectors    context.CancelFunc
 }
 
 type FastestLap struct {
