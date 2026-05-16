@@ -74,12 +74,50 @@ func (s *Store) updateLap(data *model.Lap) {
 	if data.LapNumber > s.CurrentLap {
 		s.CurrentLap = data.LapNumber
 	}
+
+	if s.SectorCounts[0] == 0 && len(data.SegmentsSector1) > 0 {
+		s.SectorCounts = [3]int{
+			len(data.SegmentsSector1),
+			len(data.SegmentsSector2),
+			len(data.SegmentsSector3),
+		}
+	}
+
 	if driver, ok := s.Drivers[data.DriverNumber]; ok {
 		if data.LapNumber > driver.CurrentLap {
 			driver.CurrentLap = data.LapNumber
 		}
+		if driver.cancelSectors != nil {
+			driver.cancelSectors()
+		}
+		driver.Sectors = [3][]uint{}
+		ctx, cancel := context.WithCancel(context.Background())
+		driver.cancelSectors = cancel
+		go s.animateSectors(ctx, driver, data)
 	}
+
 	go s.sleepForLapDuration(data)
+}
+
+func (s *Store) animateSectors(ctx context.Context, driver *Driver, data *model.Lap) {
+	segments := [3][]uint{data.SegmentsSector1, data.SegmentsSector2, data.SegmentsSector3}
+	durations := [3]float64{data.DurationSector1, data.DurationSector2, data.DurationSector3}
+
+	for i, segs := range segments {
+		if len(segs) == 0 {
+			continue
+		}
+		delay := time.Duration(durations[i] / float64(len(segs)) * float64(time.Second))
+		for _, seg := range segs {
+			time.Sleep(delay)
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			driver.Sectors[i] = append(driver.Sectors[i], seg)
+		}
+	}
 }
 
 func (s *Store) sleepForLapDuration(data *model.Lap) {
