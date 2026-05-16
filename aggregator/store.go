@@ -84,6 +84,11 @@ func (s *Store) updateLap(data *model.Lap) {
 			len(data.SegmentsSector2),
 			len(data.SegmentsSector3),
 		}
+		for _, d := range s.Drivers {
+			d.mu.Lock()
+			d.Sectors = makeFutureSectors(s.SectorCounts)
+			d.mu.Unlock()
+		}
 	}
 
 	if driver, ok := s.Drivers[data.DriverNumber]; ok {
@@ -94,7 +99,7 @@ func (s *Store) updateLap(data *model.Lap) {
 			driver.cancelSectors()
 		}
 		driver.mu.Lock()
-		driver.Sectors = [3][]uint{}
+		driver.Sectors = makeFutureSectors(s.SectorCounts)
 		driver.sectorGen++
 		gen := driver.sectorGen
 		driver.mu.Unlock()
@@ -115,7 +120,7 @@ func (s *Store) animateSectors(ctx context.Context, gen uint64, driver *Driver, 
 			continue
 		}
 		delay := time.Duration(durations[i] / float64(len(segs)) * float64(time.Second))
-		for _, seg := range segs {
+		for idx, seg := range segs {
 			time.Sleep(delay)
 			select {
 			case <-ctx.Done():
@@ -123,12 +128,20 @@ func (s *Store) animateSectors(ctx context.Context, gen uint64, driver *Driver, 
 			default:
 			}
 			driver.mu.Lock()
-			if driver.sectorGen == gen {
-				driver.Sectors[i] = append(driver.Sectors[i], seg)
+			if driver.sectorGen == gen && idx < len(driver.Sectors[i]) {
+				driver.Sectors[i][idx] = seg
 			}
 			driver.mu.Unlock()
 		}
 	}
+}
+
+func makeFutureSectors(counts [3]int) [3][]uint {
+	var sectors [3][]uint
+	for i, count := range counts {
+		sectors[i] = make([]uint, count) // zero value = future color (miniSectorColor default case)
+	}
+	return sectors
 }
 
 func (s *Store) sleepForLapDuration(data *model.Lap) {

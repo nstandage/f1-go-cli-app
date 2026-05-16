@@ -10,13 +10,20 @@ import (
 
 func TestAnimateSectors_FillsAllSegments(t *testing.T) {
 	s := &Store{}
-	driver := &Driver{Number: 1}
+	driver := &Driver{
+		Number: 1,
+		Sectors: [3][]uint{
+			make([]uint, 3),
+			make([]uint, 2),
+			make([]uint, 2),
+		},
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	lap := &model.Lap{
-		DurationSector1: 0.003, // 3ms / 3 segments = 1ms each
-		DurationSector2: 0.002, // 2ms / 2 segments = 1ms each
+		DurationSector1: 0.003,
+		DurationSector2: 0.002,
 		DurationSector3: 0.002,
 		SegmentsSector1: []uint{2049, 2049, 2049},
 		SegmentsSector2: []uint{2048, 2048},
@@ -25,23 +32,33 @@ func TestAnimateSectors_FillsAllSegments(t *testing.T) {
 
 	s.animateSectors(ctx, 0, driver, lap)
 
-	if len(driver.Sectors[0]) != 3 {
-		t.Errorf("sector 1: expected 3 segments, got %d", len(driver.Sectors[0]))
+	for idx, want := range []uint{2049, 2049, 2049} {
+		if driver.Sectors[0][idx] != want {
+			t.Errorf("sector 1[%d]: expected %d, got %d", idx, want, driver.Sectors[0][idx])
+		}
 	}
-	if driver.Sectors[0][0] != 2049 {
-		t.Errorf("sector 1[0]: expected 2049, got %d", driver.Sectors[0][0])
+	for idx, want := range []uint{2048, 2048} {
+		if driver.Sectors[1][idx] != want {
+			t.Errorf("sector 2[%d]: expected %d, got %d", idx, want, driver.Sectors[1][idx])
+		}
 	}
-	if len(driver.Sectors[1]) != 2 {
-		t.Errorf("sector 2: expected 2 segments, got %d", len(driver.Sectors[1]))
-	}
-	if len(driver.Sectors[2]) != 2 {
-		t.Errorf("sector 3: expected 2 segments, got %d", len(driver.Sectors[2]))
+	for idx, want := range []uint{2051, 2051} {
+		if driver.Sectors[2][idx] != want {
+			t.Errorf("sector 3[%d]: expected %d, got %d", idx, want, driver.Sectors[2][idx])
+		}
 	}
 }
 
 func TestAnimateSectors_CancelStopsWrites(t *testing.T) {
 	s := &Store{}
-	driver := &Driver{Number: 1}
+	driver := &Driver{
+		Number: 1,
+		Sectors: [3][]uint{
+			make([]uint, 1),
+			make([]uint, 1),
+			make([]uint, 1),
+		},
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // cancel before calling — function sleeps then sees cancelled ctx on first check
 
@@ -56,24 +73,31 @@ func TestAnimateSectors_CancelStopsWrites(t *testing.T) {
 
 	s.animateSectors(ctx, 0, driver, lap)
 
-	if len(driver.Sectors[0]) != 0 {
-		t.Errorf("sector 1: expected 0 segments after cancel, got %d", len(driver.Sectors[0]))
+	if driver.Sectors[0][0] != 0 {
+		t.Errorf("sector 1[0]: expected 0 (future) after cancel, got %d", driver.Sectors[0][0])
 	}
-	if len(driver.Sectors[1]) != 0 {
-		t.Errorf("sector 2: expected 0 segments after cancel, got %d", len(driver.Sectors[1]))
+	if driver.Sectors[1][0] != 0 {
+		t.Errorf("sector 2[0]: expected 0 (future) after cancel, got %d", driver.Sectors[1][0])
 	}
-	if len(driver.Sectors[2]) != 0 {
-		t.Errorf("sector 3: expected 0 segments after cancel, got %d", len(driver.Sectors[2]))
+	if driver.Sectors[2][0] != 0 {
+		t.Errorf("sector 3[0]: expected 0 (future) after cancel, got %d", driver.Sectors[2][0])
 	}
 }
 
 func TestAnimateSectors_CancelMidWay(t *testing.T) {
 	s := &Store{}
-	driver := &Driver{Number: 1}
+	driver := &Driver{
+		Number: 1,
+		Sectors: [3][]uint{
+			make([]uint, 3),
+			make([]uint, 3),
+			make([]uint, 3),
+		},
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 
 	lap := &model.Lap{
-		DurationSector1: 0.003, // 3ms / 3 segments = 1ms each
+		DurationSector1: 0.003,
 		DurationSector2: 0.003,
 		DurationSector3: 0.003,
 		SegmentsSector1: []uint{2049, 2049, 2049},
@@ -87,21 +111,20 @@ func TestAnimateSectors_CancelMidWay(t *testing.T) {
 		close(done)
 	}()
 
-	// Wait for sector 1 to finish (~3ms), then cancel before sector 2 completes
 	time.Sleep(5 * time.Millisecond)
 	cancel()
 	<-done
 
 	// Sector 1 should be fully written
-	if len(driver.Sectors[0]) != 3 {
-		t.Errorf("sector 1: expected 3 segments, got %d", len(driver.Sectors[0]))
+	for idx := range 3 {
+		if driver.Sectors[0][idx] != 2049 {
+			t.Errorf("sector 1[%d]: expected 2049, got %d", idx, driver.Sectors[0][idx])
+		}
 	}
-	// Sector 2 should be empty or partial (cancelled)
-	if len(driver.Sectors[1]) == 3 {
-		t.Errorf("sector 2: expected fewer than 3 segments (cancellation should stop it), got 3")
-	}
-	// Sector 3 should be empty
-	if len(driver.Sectors[2]) != 0 {
-		t.Errorf("sector 3: expected 0 segments, got %d", len(driver.Sectors[2]))
+	// Sector 3 should be untouched (all future/zero)
+	for idx := range 3 {
+		if driver.Sectors[2][idx] != 0 {
+			t.Errorf("sector 3[%d]: expected 0 (future), got %d", idx, driver.Sectors[2][idx])
+		}
 	}
 }

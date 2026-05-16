@@ -42,6 +42,7 @@ const (
 	mediumShadeBlock = "▒" // U+2592
 	darkShadeBlock   = "▓" // U+2593
 	fullShadeBlock   = "█" // U+2588
+	lowerHalfBlock   = "▄" // U+2584
 )
 
 // Styles

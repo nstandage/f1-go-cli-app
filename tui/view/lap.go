@@ -2,7 +2,6 @@ package view
 
 import (
 	"image/color"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 )
@@ -13,7 +12,7 @@ func Laps(drivers [][][]uint) string {
 		row := ""
 		for _, sector := range sectors {
 			for _, seg := range sector {
-				row += defaultTextStyle(strings.Repeat(fullShadeBlock, 2), miniSectorColor(seg))
+				row += defaultTextStyle(lowerHalfBlock, miniSectorColor(seg)) + " "
 			}
 			row += "   "
 		}
