@@ -16,6 +16,8 @@ type Snapshot struct {
 	TireCompounds   []string
 	TireAges        []string
 	RecentPitStops  []PitStopEntry
+	Sectors         [][][]uint
+	SectorCounts    [3]int
 }
 
 type PitStopEntry struct {
