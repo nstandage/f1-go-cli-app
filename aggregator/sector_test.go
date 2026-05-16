@@ -23,7 +23,7 @@ func TestAnimateSectors_FillsAllSegments(t *testing.T) {
 		SegmentsSector3: []uint{2051, 2051},
 	}
 
-	s.animateSectors(ctx, driver, lap)
+	s.animateSectors(ctx, 0, driver, lap)
 
 	if len(driver.Sectors[0]) != 3 {
 		t.Errorf("sector 1: expected 3 segments, got %d", len(driver.Sectors[0]))
@@ -54,7 +54,7 @@ func TestAnimateSectors_CancelStopsWrites(t *testing.T) {
 		SegmentsSector3: []uint{2051},
 	}
 
-	s.animateSectors(ctx, driver, lap)
+	s.animateSectors(ctx, 0, driver, lap)
 
 	if len(driver.Sectors[0]) != 0 {
 		t.Errorf("sector 1: expected 0 segments after cancel, got %d", len(driver.Sectors[0]))
@@ -83,7 +83,7 @@ func TestAnimateSectors_CancelMidWay(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		s.animateSectors(ctx, driver, lap)
+		s.animateSectors(ctx, 0, driver, lap)
 		close(done)
 	}()
 
