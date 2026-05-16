@@ -26,13 +26,14 @@ type PitStopEntry struct {
 }
 
 type SessionBarSnapShot struct {
-	EventName        string
-	EventType        string
-	FastestLap		 *FastestLapSnapshot
-	CurrentLap       uint
-	TotalLaps        uint
-	IsReplay         bool
-	EventDate        time.Time
+	EventName   string
+	EventType   string
+	FastestLap  *FastestLapSnapshot
+	CurrentLap  uint
+	TotalLaps   uint
+	IsReplay    bool
+	EventDate   time.Time
+	RaceElapsed time.Duration
 }
 
 type FastestLapSnapshot struct {

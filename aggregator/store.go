@@ -15,19 +15,20 @@ var (
 )
 
 type Store struct {
-	history      []model.Snapshot
-	Drivers      map[uint]*Driver // mapped to DriverNumber
-	RaceControl  []model.RaceControl
-	TotalLaps    uint
-	CurrentLap   uint
-	IsReplay     bool
-	Session      *model.Session
-	Meeting      *model.Meeting
-	StartingGrid []model.StartingGrid
-	FastestLap   *FastestLap
-	Stints       map[uint][]model.Stint
-	RecentPits   []model.PitStopEntry
-	SectorCounts [3]int
+	history       []model.Snapshot
+	Drivers       map[uint]*Driver // mapped to DriverNumber
+	RaceControl   []model.RaceControl
+	TotalLaps     uint
+	CurrentLap    uint
+	IsReplay      bool
+	Session       *model.Session
+	Meeting       *model.Meeting
+	StartingGrid  []model.StartingGrid
+	FastestLap    *FastestLap
+	Stints        map[uint][]model.Stint
+	RecentPits    []model.PitStopEntry
+	SectorCounts  [3]int
+	RaceStartTime *time.Time
 }
 
 type Driver struct {

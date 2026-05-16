@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 	"github.com/nstandage/f1-go-cli-app/datasource"
 	"github.com/nstandage/f1-go-cli-app/model"
 )
@@ -65,6 +66,10 @@ func convertDrivers(ds []model.Driver) map[uint]*Driver {
 // MARK: Channel functions
 func (e *Engine) listen(c <-chan *model.Event) {
 	for event := range c {
+		if e.store.RaceStartTime == nil {
+			now := time.Now()
+			e.store.RaceStartTime = &now
+		}
 		e.handle(event)
 	}
 }
@@ -117,14 +122,19 @@ func (e *Engine) updateStartingGrid(data []model.StartingGrid) {
 // MARK: Snapshot Functions
 
 func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
+	var raceElapsed time.Duration
+	if e.store.RaceStartTime != nil {
+		raceElapsed = time.Since(*e.store.RaceStartTime)
+	}
 	sessionBar := model.SessionBarSnapShot{
-		EventName:  e.store.Meeting.MeetingOfficialName,
-		EventType:  e.store.Session.SessionType,
-		CurrentLap: e.store.CurrentLap,
-		FastestLap: e.getFastestLap(),
-		TotalLaps:  e.store.TotalLaps,
-		IsReplay:   e.store.IsReplay,
-		EventDate:  e.store.Session.DateStart,
+		EventName:   e.store.Meeting.MeetingOfficialName,
+		EventType:   e.store.Session.SessionType,
+		CurrentLap:  e.store.CurrentLap,
+		FastestLap:  e.getFastestLap(),
+		TotalLaps:   e.store.TotalLaps,
+		IsReplay:    e.store.IsReplay,
+		EventDate:   e.store.Session.DateStart,
+		RaceElapsed: raceElapsed,
 	}
 	lastLap, lastLapIsPitOut := e.getLastLap()
 	snapshot := model.Snapshot{
