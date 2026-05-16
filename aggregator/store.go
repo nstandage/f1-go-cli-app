@@ -2,6 +2,7 @@ package aggregator
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/nstandage/f1-go-cli-app/model"
@@ -42,6 +43,7 @@ type Driver struct {
 	LapsOnTire       uint
 	PitCount         uint
 	CurrentLap       uint
+	mu               sync.RWMutex
 	Sectors          [3][]uint
 	cancelSectors    context.CancelFunc
 }
@@ -90,7 +92,9 @@ func (s *Store) updateLap(data *model.Lap) {
 		if driver.cancelSectors != nil {
 			driver.cancelSectors()
 		}
+		driver.mu.Lock()
 		driver.Sectors = [3][]uint{}
+		driver.mu.Unlock()
 		ctx, cancel := context.WithCancel(context.Background())
 		driver.cancelSectors = cancel
 		go s.animateSectors(ctx, driver, data)
@@ -115,7 +119,9 @@ func (s *Store) animateSectors(ctx context.Context, driver *Driver, data *model.
 				return
 			default:
 			}
+			driver.mu.Lock()
 			driver.Sectors[i] = append(driver.Sectors[i], seg)
+			driver.mu.Unlock()
 		}
 	}
 }

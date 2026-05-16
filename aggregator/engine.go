@@ -278,11 +278,13 @@ func (e *Engine) getSectors() [][][]uint {
 			continue
 		}
 		sectors := make([][]uint, 3)
+		d.mu.RLock()
 		for i := range 3 {
 			seg := make([]uint, len(d.Sectors[i]))
 			copy(seg, d.Sectors[i])
 			sectors[i] = seg
 		}
+		d.mu.RUnlock()
 		result[d.Position-1] = sectors
 	}
 	return result
