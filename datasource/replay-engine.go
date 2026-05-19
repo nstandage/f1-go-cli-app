@@ -13,11 +13,11 @@ type ReplayEngine struct {
 func (eng *ReplayEngine) Start(out chan<- *model.Event, sessionStart time.Time) {
 	defer close(out)
 	eng.sortEventData()
-	skips := 0
 
 	for i, e := range eng.EventData.EventModels {
+		// skipForward := 26 * time.Minute + 30 * time.Second
+		// if e.GetDateStart().Before(sessionStart.Add(skipForward)) {
 		if e.GetDateStart().Before(sessionStart) {
-			skips++
 			continue
 		}
 		if i > 0 { // prevents sleep for first event only. i-1 crashes if i = 0
