@@ -58,17 +58,7 @@ func (m Model) View() tea.View {
 	sessionBar := view.SessionBar(snapshot.SessionBar)
 	legendBar := view.LegendBar()
 	positionColumn := view.PositionsColumn()
-	lapSectors := [][]int{
-		{2049, 2049, 2049, 2051, 2049, 2051, 2049, 2049},
-		{2049, 2049, 2049, 2049, 2049, 2049, 2049, 2049},
-		{2048, 2048, 2048, 2048, 2048, 2064, 2064, 2064},
-	}
-	lapSectorCount := []int{
-		len(lapSectors[0]),
-		len(lapSectors[1]),
-		len(lapSectors[2]),
-	}
-	topBar := view.Topbar(lapSectorCount)
+	topBar := view.Topbar(snapshot.SectorCounts[:])
 
 	drivers := snapshot.Drivers
 
@@ -86,10 +76,6 @@ func (m Model) View() tea.View {
 
 	raceControlMessages := snapshot.RaceControlMsgs
 
-	pitStops := []float64{
-		3.0, 3.2, 3.8, 2.99, 3.12,
-	}
-
 	driverColumn := view.DriverColumn(drivers)
 	intervalColumn := view.DefaultColumn(intervals)
 	gapToLeaderColumn := view.DefaultColumn(gapToLeaders)
@@ -97,9 +83,9 @@ func (m Model) View() tea.View {
 	pitColumn := view.PitColumn(pits)
 	tiresColumn := view.TireColumn(tires)
 	tireAgeColumn := view.TireAgeColumn(tireAge)
-	laps := view.Laps(lapSectors)
+	laps := view.Laps(snapshot.Sectors)
 	raceControl := view.RaceControl(raceControlMessages)
-	pitStopView := view.PitStops(pitStops)
+	pitStopView := view.PitStops(snapshot.RecentPitStops)
 
 	driverView := lipgloss.JoinHorizontal(
 		lipgloss.Top,

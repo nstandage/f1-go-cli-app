@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 	"github.com/nstandage/f1-go-cli-app/datasource"
 	"github.com/nstandage/f1-go-cli-app/model"
 )
@@ -65,6 +66,10 @@ func convertDrivers(ds []model.Driver) map[uint]*Driver {
 // MARK: Channel functions
 func (e *Engine) listen(c <-chan *model.Event) {
 	for event := range c {
+		if e.store.RaceStartTime == nil {
+			now := time.Now()
+			e.store.RaceStartTime = &now
+		}
 		e.handle(event)
 	}
 }
@@ -117,14 +122,19 @@ func (e *Engine) updateStartingGrid(data []model.StartingGrid) {
 // MARK: Snapshot Functions
 
 func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
+	var raceElapsed time.Duration
+	if e.store.RaceStartTime != nil {
+		raceElapsed = time.Since(*e.store.RaceStartTime)
+	}
 	sessionBar := model.SessionBarSnapShot{
-		EventName:  e.store.Meeting.MeetingOfficialName,
-		EventType:  e.store.Session.SessionType,
-		CurrentLap: e.store.CurrentLap,
-		FastestLap: e.getFastestLap(),
-		TotalLaps:  e.store.TotalLaps,
-		IsReplay:   e.store.IsReplay,
-		EventDate:  e.store.Session.DateStart,
+		EventName:   e.store.Meeting.MeetingOfficialName,
+		EventType:   e.store.Session.SessionType,
+		CurrentLap:  e.store.CurrentLap,
+		FastestLap:  e.getFastestLap(),
+		TotalLaps:   e.store.TotalLaps,
+		IsReplay:    e.store.IsReplay,
+		EventDate:   e.store.Session.DateStart,
+		RaceElapsed: raceElapsed,
 	}
 	lastLap, lastLapIsPitOut := e.getLastLap()
 	snapshot := model.Snapshot{
@@ -138,6 +148,9 @@ func (e *Engine) GetSnapshot(offset uint) *model.Snapshot {
 		PitCounts:       e.getPitCounts(),
 		TireCompounds:   e.getTireCompounds(),
 		TireAges:        e.getTireAges(),
+		RecentPitStops:  e.store.RecentPits,
+		Sectors:         e.getSectors(),
+		SectorCounts:    e.store.SectorCounts,
 	}
 
 	e.store.updateHistory(&snapshot)
@@ -266,4 +279,23 @@ func (e *Engine) getTireAges() []string {
 		}
 	}
 	return ages
+}
+
+func (e *Engine) getSectors() [][][]uint {
+	result := make([][][]uint, len(e.store.Drivers))
+	for _, d := range e.store.Drivers {
+		if d.Position == 0 {
+			continue
+		}
+		sectors := make([][]uint, 3)
+		d.mu.RLock()
+		for i := range 3 {
+			seg := make([]uint, len(d.Sectors[i]))
+			copy(seg, d.Sectors[i])
+			sectors[i] = seg
+		}
+		d.mu.RUnlock()
+		result[d.Position-1] = sectors
+	}
+	return result
 }

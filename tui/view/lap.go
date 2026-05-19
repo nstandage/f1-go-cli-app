@@ -2,40 +2,36 @@ package view
 
 import (
 	"image/color"
-	"strings"
 
 	"charm.land/lipgloss/v2"
 )
 
-func Laps(sectors [][]int) string {
-	str := ""
-
-	for _, sector := range sectors {
-		for _, miniSector := range sector {
-			color := miniSectorColor(miniSector)
-			block := strings.Repeat(fullShadeBlock, 2)
-			str = str + defaultTextStyle(block, color)
+func Laps(drivers [][][]uint) string {
+	rows := make([]string, len(drivers))
+	for i, sectors := range drivers {
+		row := ""
+		for _, sector := range sectors {
+			for _, seg := range sector {
+				row += defaultTextStyle(lowerHalfBlock, miniSectorColor(seg)) + " "
+			}
+			row += "   "
 		}
-		str = str + "   "
-
-		//Number of spaces filling the margin gap in sectorTitle()
-		// secString = secString + strings.Repeat(lightShadeBlock+lightShadeBlock, s) + "   "
+		rows[i] = row
 	}
-
 	return lipgloss.NewStyle().Margin(0, 0, 0, 7).Render(
-		str,
+		lipgloss.JoinVertical(lipgloss.Left, rows...),
 	)
 }
 
-func miniSectorColor(i int) color.Color {
+func miniSectorColor(i uint) color.Color {
 	switch i {
-	case 2048: // Yellow sector
+	case 2048:
 		return slowSectorColor
-	case 2049: // Green sector
+	case 2049:
 		return bestPersonalSectorColor
-	case 2051: // Purple sector
+	case 2051:
 		return bestOverallSectorColor
-	case 2064: // Pitlane
+	case 2064:
 		return pitLaneSectorColor
 	default:
 		return futureSectorColor
