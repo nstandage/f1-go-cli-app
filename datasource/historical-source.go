@@ -34,9 +34,9 @@ const (
 type DataSource interface {
 	Start() (*model.RaceData, <-chan *model.Event)
 	IsReplay() bool
+	Fetch(context.Context, string, string) error
 }
 
-// Historical Source handles fetching all data from selected session at once and returns a sessionData object.
 type HistoricalSource struct {
 	service   *service.OpenF1HTTP
 	raceData  *model.RaceData
@@ -51,111 +51,6 @@ func NewHistoricalSource(s *service.OpenF1HTTP) *HistoricalSource {
 	}
 }
 
-// Fetches data from server all at once.
-func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetingKey string) error {
-	rl := NewRateLimiter(2)
-	defer rl.Stop()
-
-	meetings, err := hs.getMeetings(ctx, rl, meetingKey)
-	if err != nil {
-		return fmt.Errorf("HistoricaSource.Fetch - meetings failed: %w", err)
-	}
-
-	if len(meetings) == 0 {
-		return fmt.Errorf("HistoricalSource.Fetch - meetings is 0 %w", err)
-	}
-
-	sessions, err := hs.getMeetingSessions(ctx, rl, meetingKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - sessions failed %w", err)
-	}
-
-	raceSession, err := getSessionByTypeAndName(sessions, RaceType, Race)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - sessions is 0 %w", err)
-	}
-
-	raceControls, err := hs.getRaceControls(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - raceControls failed %w", err)
-	}
-
-	if len(raceControls) == 0 {
-		return fmt.Errorf("HistoricalSource.Fetch - raceControls is 0 %w", err)
-	}
-
-	qSession, err := getSessionByTypeAndName(sessions, QualifyingType, Qualifying)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - Qualifying Session is 0 %w", err)
-	}
-
-	grid, err := hs.getStartingGrid(ctx, rl, qSession.GetSessionKey())
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - Starting Grid failed %w", err)
-	}
-
-	drivers, err := hs.getDrivers(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
-	}
-
-	positions, err := hs.getPositions(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - positions failed %w", err)
-	}
-
-	startTime := hs.getStartTime(raceControls)
-	intervals, err := hs.getIntervals(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - intervals failed %w", err)
-	}
-
-	laps, err := hs.getLaps(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - laps failed %w", err)
-	}
-
-	stints, err := hs.getStints(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - stints failed %w", err)
-	}
-
-	pits, err := hs.getPits(ctx, rl, sessionKey)
-	if err != nil {
-		return fmt.Errorf("HistoricalSource.Fetch - pits failed %w", err)
-	}
-
-	hs.raceData.Meeting = &meetings[0]
-	hs.raceData.Session = raceSession
-	hs.raceData.TotalLaps = getLapCount(raceControls)
-	hs.raceData.StartingGrid = grid
-	hs.raceData.Drivers = drivers
-	hs.raceData.SessionStart = startTime
-	hs.raceData.Stints = stints
-
-	for _, rc := range raceControls {
-		hs.eventData.EventModels = append(hs.eventData.EventModels, &rc)
-	}
-
-	for _, i := range intervals {
-		hs.eventData.EventModels = append(hs.eventData.EventModels, &i)
-	}
-
-	for _, p := range positions {
-		hs.eventData.EventModels = append(hs.eventData.EventModels, &p)
-	}
-
-	for _, l := range laps {
-		hs.eventData.EventModels = append(hs.eventData.EventModels, &l)
-	}
-
-	for _, pit := range pits {
-		hs.eventData.EventModels = append(hs.eventData.EventModels, &pit)
-	}
-
-	return nil
-}
-
 func (hs *HistoricalSource) Start() (*model.RaceData, <-chan *model.Event) {
 	replayEngine := ReplayEngine{EventData: hs.eventData}
 	c := make(chan *model.Event)
@@ -163,9 +58,122 @@ func (hs *HistoricalSource) Start() (*model.RaceData, <-chan *model.Event) {
 	return hs.raceData, c
 }
 
+func (hs *HistoricalSource) IsReplay() bool {
+	return true
+}
+
+func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetingKey string) error {
+	rl := NewRateLimiter(2)
+	defer rl.Stop()
+
+	rl.Wait(); meetings, err := hs.service.FetchMeetings(ctx, meetingKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - meetings failed: %w", err)
+	}
+
+	if len(meetings) == 0 {
+		return fmt.Errorf("HistoricalSource.Fetch - meetings is 0")
+	}
+
+	rl.Wait(); 	sessions, err := hs.service.FetchSessionsByMeeting(ctx, meetingKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - sessions failed %w", err)
+	}
+
+	raceSession, err := getSessionByTypeAndName(sessions, RaceType, Race)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - sessions - %w", err)
+	}
+
+	rl.Wait(); raceControls, err := hs.service.FetchRaceControls(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - raceControls failed %w", err)
+	}
+
+	startTime, err := hs.getStartTime(raceControls)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - race control get startTime returned nil %w", err)
+	}
+
+	qSession, err := getSessionByTypeAndName(sessions, QualifyingType, Qualifying)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - Qualifying Session - %w", err)
+	}
+
+	rl.Wait(); grid, err := hs.service.FetchStartingGrid(ctx, qSession.GetSessionKey())
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - Starting Grid failed %w", err)
+	}
+
+	rl.Wait(); drivers, err := hs.service.FetchDrivers(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
+	}
+
+	rl.Wait(); positions, err := hs.service.FetchPositions(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - positions failed %w", err)
+	}
+
+	rl.Wait(); intervals, err := hs.service.FetchIntervals(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - intervals failed %w", err)
+	}
+
+	rl.Wait(); laps, err := hs.service.FetchLaps(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - laps failed %w", err)
+	}
+
+	rl.Wait(); stints, err := hs.service.FetchStints(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - stints failed %w", err)
+	}
+
+	rl.Wait(); pits, err := hs.service.FetchPits(ctx, sessionKey)
+	if err != nil {
+		return fmt.Errorf("HistoricalSource.Fetch - pits failed %w", err)
+	}
+
+	total := len(raceControls) + len(intervals) + len(positions) + len(laps) + len(pits)
+	hs.eventData.EventModels = make([]model.EventModel, 0, total)
+
+	for i := range raceControls {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &raceControls[i])
+	}
+
+	for i := range intervals {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &intervals[i])
+	}
+
+	for i := range positions {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &positions[i])
+	}
+
+	for i := range laps {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &laps[i])
+	}
+
+	for i := range pits {
+		hs.eventData.EventModels = append(hs.eventData.EventModels, &pits[i])
+	}
+
+	hs.raceData.Meeting = &meetings[0]
+	hs.raceData.Session = raceSession
+	hs.raceData.TotalLaps = getLapCount(raceControls)
+	hs.raceData.StartingGrid = grid
+	hs.raceData.Drivers = drivers
+	hs.raceData.SessionStart = *startTime
+	hs.raceData.Stints = stints
+
+	return nil
+}
+
+// MARK: helper
+
 func getLapCount(rcs []model.RaceControl) uint {
 	for _, rc := range rcs {
-		if strings.ToUpper(rc.Flag) == "CHEQUERED" {
+		if strings.ToLower(rc.Flag) == "chequered" {
 			return rc.LapNumber
 		}
 	}
@@ -182,10 +190,6 @@ func getLapCountByNumber(rcs []model.RaceControl) uint {
 	return count
 }
 
-func (hs *HistoricalSource) IsReplay() bool {
-	return true
-}
-
 func getSessionByTypeAndName(ss []model.Session, st SessionType, sn SessionName) (*model.Session, error) {
 	for _, s := range ss {
 		if s.SessionType == string(st) && s.SessionName == string(sn) {
@@ -194,7 +198,7 @@ func getSessionByTypeAndName(ss []model.Session, st SessionType, sn SessionName)
 	}
 
 	var meetingKey uint = 0
-	err := fmt.Errorf("Couldn't find Session of type: %v and name: %v", st, sn)
+	err := fmt.Errorf("couldn't find Session of type: %v and name: %v", st, sn)
 	if len(ss) > 0 {
 		meetingKey = ss[0].MeetingKey
 		err = fmt.Errorf("%v for meeting_key: %v", err, meetingKey)
@@ -202,68 +206,12 @@ func getSessionByTypeAndName(ss []model.Session, st SessionType, sn SessionName)
 	return nil, err
 }
 
-func (hs *HistoricalSource) getMeetings(ctx context.Context, rl *RateLimiter, meetingKey string) ([]model.Meeting, error) {
-	rl.Wait()
-	return hs.service.FetchMeetings(ctx, meetingKey)
-}
-
-func (hs *HistoricalSource) getSessions(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Session, error) {
-	rl.Wait()
-	return hs.service.FetchSessions(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getMeetingSessions(ctx context.Context, rl *RateLimiter, meetingKey string) ([]model.Session, error) {
-	rl.Wait()
-	return hs.service.FetchMeetingSessions(ctx, meetingKey)
-}
-
-func (hs *HistoricalSource) getRaceControls(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.RaceControl, error) {
-	rl.Wait()
-	return hs.service.FetchRaceControls(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getStartTime(rcs []model.RaceControl) time.Time {
+func (hs *HistoricalSource) getStartTime(rcs []model.RaceControl) (*time.Time, error) {
 	for _, rc := range rcs {
 		lowerMsg := strings.ToLower(rc.Message)
 		if strings.Contains(lowerMsg, "session start") {
-			return rc.DateStart
+			return &rc.DateStart, nil
 		}
 	}
-	panic("getStartTime failed to find start")
-}
-
-// API requires a Qualifying session_key
-func (hs *HistoricalSource) getStartingGrid(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.StartingGrid, error) {
-	rl.Wait()
-	return hs.service.FetchStartingGrid(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getDrivers(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Driver, error) {
-	rl.Wait()
-	return hs.service.FetchDrivers(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getPositions(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Position, error) {
-	rl.Wait()
-	return hs.service.FetchPositions(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getIntervals(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Interval, error) {
-	rl.Wait()
-	return hs.service.FetchIntervals(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getLaps(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Lap, error) {
-	rl.Wait()
-	return hs.service.FetchLaps(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getStints(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Stint, error) {
-	rl.Wait()
-	return hs.service.FetchStints(ctx, sessionKey)
-}
-
-func (hs *HistoricalSource) getPits(ctx context.Context, rl *RateLimiter, sessionKey string) ([]model.Pit, error) {
-	rl.Wait()
-	return hs.service.FetchPits(ctx, sessionKey)
+	return nil, fmt.Errorf("startTime Couldn't be found from RaceControl")
 }

@@ -11,22 +11,34 @@ import (
 	"github.com/nstandage/f1-go-cli-app/model"
 )
 
-type OpenF1HTTP struct{}
+type OpenF1HTTP struct{
+	client *http.Client
+	baseUrl string
+}
 
 var baseUrl string = "https://api.openf1.org/v1"
 
+func NewOpenF1HTTP() OpenF1HTTP {
+	client := http.Client{
+		Timeout: time.Second * 10,
+	}
+	return OpenF1HTTP{
+		client: &client,
+	}
+}
+
 func (s *OpenF1HTTP) FetchSessions(ctx context.Context, sessionKey string) ([]model.Session, error) {
 	url := fmt.Sprintf("%v/sessions?session_key=%v", baseUrl, sessionKey)
-	session, err := fetchData[[]model.Session](ctx, url)
+	session, err := fetchData[[]model.Session](ctx, s.client, url)
 	if session == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchSessions sessions == nil %w", err)
 	}
 	return *session, err
 }
 
-func (s *OpenF1HTTP) FetchMeetingSessions(ctx context.Context, meetingKey string) ([]model.Session, error) {
+func (s *OpenF1HTTP) FetchSessionsByMeeting(ctx context.Context, meetingKey string) ([]model.Session, error) {
 	url := fmt.Sprintf("%v/sessions?meeting_key=%v", baseUrl, meetingKey)
-	session, err := fetchData[[]model.Session](ctx, url)
+	session, err := fetchData[[]model.Session](ctx, s.client, url)
 	if session == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchMeetingSessions sessions == nil %w", err)
 	}
@@ -35,7 +47,7 @@ func (s *OpenF1HTTP) FetchMeetingSessions(ctx context.Context, meetingKey string
 
 func (s *OpenF1HTTP) FetchMeetings(ctx context.Context, meetingKey string) ([]model.Meeting, error) {
 	url := fmt.Sprintf("%v/meetings?meeting_key=%v", baseUrl, meetingKey)
-	meeting, err := fetchData[[]model.Meeting](ctx, url)
+	meeting, err := fetchData[[]model.Meeting](ctx, s.client, url)
 	if meeting == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchMeetings meetings == nil %w", err)
 	}
@@ -44,7 +56,7 @@ func (s *OpenF1HTTP) FetchMeetings(ctx context.Context, meetingKey string) ([]mo
 
 func (s *OpenF1HTTP) FetchDrivers(ctx context.Context, sessionKey string) ([]model.Driver, error) {
 	url := fmt.Sprintf("%v/drivers?session_key=%v", baseUrl, sessionKey)
-	drivers, err := fetchData[[]model.Driver](ctx, url)
+	drivers, err := fetchData[[]model.Driver](ctx, s.client, url)
 	if drivers == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchDrivers drivers == nil %w", err)
 	}
@@ -53,7 +65,7 @@ func (s *OpenF1HTTP) FetchDrivers(ctx context.Context, sessionKey string) ([]mod
 
 func (s *OpenF1HTTP) FetchIntervals(ctx context.Context, sessionKey string) ([]model.Interval, error) {
 	url := fmt.Sprintf("%v/intervals?session_key=%v", baseUrl, sessionKey)
-	intervals, err := fetchData[[]model.Interval](ctx, url)
+	intervals, err := fetchData[[]model.Interval](ctx, s.client, url)
 	if intervals == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchIntervals ints == nil %w", err)
 	}
@@ -62,7 +74,7 @@ func (s *OpenF1HTTP) FetchIntervals(ctx context.Context, sessionKey string) ([]m
 
 func (s *OpenF1HTTP) FetchLaps(ctx context.Context, sessionKey string) ([]model.Lap, error) {
 	url := fmt.Sprintf("%v/laps?session_key=%v", baseUrl, sessionKey)
-	laps, err := fetchData[[]model.Lap](ctx, url)
+	laps, err := fetchData[[]model.Lap](ctx, s.client, url)
 	if laps == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchLaps laps == nil %w", err)
 	}
@@ -71,7 +83,7 @@ func (s *OpenF1HTTP) FetchLaps(ctx context.Context, sessionKey string) ([]model.
 
 func (s *OpenF1HTTP) FetchLocations(ctx context.Context, sessionKey string, driverNumber uint) ([]model.Location, error) {
 	url := fmt.Sprintf("%v/location?session_key=%v&driver_number=%v", baseUrl, sessionKey, driverNumber)
-	locations, err := fetchData[[]model.Location](ctx, url)
+	locations, err := fetchData[[]model.Location](ctx, s.client, url)
 	if locations == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchLocations loc == nil %w", err)
 	}
@@ -80,7 +92,7 @@ func (s *OpenF1HTTP) FetchLocations(ctx context.Context, sessionKey string, driv
 
 func (s *OpenF1HTTP) FetchPits(ctx context.Context, sessionKey string) ([]model.Pit, error) {
 	url := fmt.Sprintf("%v/pit?session_key=%v", baseUrl, sessionKey)
-	pits, err := fetchData[[]model.Pit](ctx, url)
+	pits, err := fetchData[[]model.Pit](ctx, s.client, url)
 	if pits == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchPits pits == nil %w", err)
 	}
@@ -89,7 +101,7 @@ func (s *OpenF1HTTP) FetchPits(ctx context.Context, sessionKey string) ([]model.
 
 func (s *OpenF1HTTP) FetchPositions(ctx context.Context, sessionKey string) ([]model.Position, error) {
 	url := fmt.Sprintf("%v/position?session_key=%v", baseUrl, sessionKey)
-	positions, err := fetchData[[]model.Position](ctx, url)
+	positions, err := fetchData[[]model.Position](ctx, s.client, url)
 	if positions == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchPositions pos == nil %w", err)
 	}
@@ -98,7 +110,7 @@ func (s *OpenF1HTTP) FetchPositions(ctx context.Context, sessionKey string) ([]m
 
 func (s *OpenF1HTTP) FetchRaceControls(ctx context.Context, sessionKey string) ([]model.RaceControl, error) {
 	url := fmt.Sprintf("%v/race_control?session_key=%v", baseUrl, sessionKey)
-	raceControl, err := fetchData[[]model.RaceControl](ctx, url)
+	raceControl, err := fetchData[[]model.RaceControl](ctx, s.client, url)
 	if raceControl == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchRaceControl rc == nil %w", err)
 	}
@@ -107,7 +119,7 @@ func (s *OpenF1HTTP) FetchRaceControls(ctx context.Context, sessionKey string) (
 
 func (s *OpenF1HTTP) FetchStints(ctx context.Context, sessionKey string) ([]model.Stint, error) {
 	url := fmt.Sprintf("%v/stints?session_key=%v", baseUrl, sessionKey)
-	stints, err := fetchData[[]model.Stint](ctx, url)
+	stints, err := fetchData[[]model.Stint](ctx, s.client, url)
 	if stints == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchStints stints == nil %w", err)
 	}
@@ -116,23 +128,20 @@ func (s *OpenF1HTTP) FetchStints(ctx context.Context, sessionKey string) ([]mode
 
 func (s *OpenF1HTTP) FetchStartingGrid(ctx context.Context, sessionKey string) ([]model.StartingGrid, error) {
 	url := fmt.Sprintf("%v/starting_grid?session_key=%v", baseUrl, sessionKey)
-	grid, err := fetchData[[]model.StartingGrid](ctx, url)
+	grid, err := fetchData[[]model.StartingGrid](ctx, s.client, url)
 	if grid == nil {
 		return nil, fmt.Errorf("OpenF1HTTP.FetchStartingGrid startingGrids == nil %w", err)
 	}
 	return *grid, err
 }
 
-func fetchData[T any](ctx context.Context, url string) (*T, error) {
+func fetchData[T any](ctx context.Context, client *http.Client, url string) (*T, error) {
 	fmt.Printf("URL: %v\n", url)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	client := http.Client{
-		Timeout: time.Second * 10,
-	}
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err

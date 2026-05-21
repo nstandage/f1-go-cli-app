@@ -14,7 +14,7 @@ import (
 func main() {
 	var sessionKey = "9939"
 	var meetingKey = "1265"
-	service := service.OpenF1HTTP{}
+	service := service.NewOpenF1HTTP()
 
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
