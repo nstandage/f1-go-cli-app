@@ -8,8 +8,8 @@
 
 ## What it is
 
-Pitwall acts as a supplment while watching F1 races, by displaying historical race interval data, tire wear, pitstop times, sector heatmaps, and race control messages, in real-time.
-Like the timing tower, but better.
+Pitwall is an F1 race supplement. It displays race interval data, tire wear, pitstop times, sector heatmaps, and race control messages, in real-time.
+It's similar to the timing tower, but better.
 
 Built in Go with [BubbleTea](https://github.com/charmbracelet/bubbletea), using the public [OpenF1 API](https://openf1.org/).
 
