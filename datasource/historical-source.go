@@ -63,10 +63,7 @@ func (hs *HistoricalSource) IsReplay() bool {
 }
 
 func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetingKey string) error {
-	rl := NewRateLimiter(2)
-	defer rl.Stop()
-
-	rl.Wait(); meetings, err := hs.service.FetchMeetings(ctx, meetingKey)
+	meetings, err := hs.service.FetchMeetings(ctx, meetingKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - meetings failed: %w", err)
 	}
@@ -75,7 +72,7 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - meetings is 0")
 	}
 
-	rl.Wait(); 	sessions, err := hs.service.FetchSessionsByMeeting(ctx, meetingKey)
+		sessions, err := hs.service.FetchSessionsByMeeting(ctx, meetingKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - sessions failed %w", err)
 	}
@@ -85,7 +82,7 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - sessions - %w", err)
 	}
 
-	rl.Wait(); raceControls, err := hs.service.FetchRaceControls(ctx, sessionKey)
+	raceControls, err := hs.service.FetchRaceControls(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - raceControls failed %w", err)
 	}
@@ -100,37 +97,37 @@ func (hs *HistoricalSource) Fetch(ctx context.Context, sessionKey string, meetin
 		return fmt.Errorf("HistoricalSource.Fetch - Qualifying Session - %w", err)
 	}
 
-	rl.Wait(); grid, err := hs.service.FetchStartingGrid(ctx, qSession.GetSessionKey())
+	grid, err := hs.service.FetchStartingGrid(ctx, qSession.GetSessionKey())
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - Starting Grid failed %w", err)
 	}
 
-	rl.Wait(); drivers, err := hs.service.FetchDrivers(ctx, sessionKey)
+	drivers, err := hs.service.FetchDrivers(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - drivers failed %w", err)
 	}
 
-	rl.Wait(); positions, err := hs.service.FetchPositions(ctx, sessionKey)
+	positions, err := hs.service.FetchPositions(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - positions failed %w", err)
 	}
 
-	rl.Wait(); intervals, err := hs.service.FetchIntervals(ctx, sessionKey)
+	intervals, err := hs.service.FetchIntervals(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - intervals failed %w", err)
 	}
 
-	rl.Wait(); laps, err := hs.service.FetchLaps(ctx, sessionKey)
+	laps, err := hs.service.FetchLaps(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - laps failed %w", err)
 	}
 
-	rl.Wait(); stints, err := hs.service.FetchStints(ctx, sessionKey)
+	stints, err := hs.service.FetchStints(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - stints failed %w", err)
 	}
 
-	rl.Wait(); pits, err := hs.service.FetchPits(ctx, sessionKey)
+	pits, err := hs.service.FetchPits(ctx, sessionKey)
 	if err != nil {
 		return fmt.Errorf("HistoricalSource.Fetch - pits failed %w", err)
 	}

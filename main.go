@@ -22,7 +22,7 @@ func main() {
 	}
 	defer f.Close()
 
-	hs := datasource.NewHistoricalSource(&service)
+	hs := datasource.NewHistoricalSource(service)
 
 	err = hs.Fetch(context.Background(), sessionKey, meetingKey)
 	if err != nil {
